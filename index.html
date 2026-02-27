@@ -40,11 +40,9 @@
         <input type="date" id="dataSeletor" onchange="setarData('custom', this)">
         <button class="btn-config" onclick="abrirConfig()">⚙️</button>
     </div>
-
     <div class="category-scroll" id="listaBotoesCat"></div>
     <input type="hidden" id="categoriaSelecionada" value="Geral">
     <input type="hidden" id="corSelecionada" value="#4CAF50">
-
     <div class="secao-card">
         <input type="text" id="descTask" placeholder="O que vamos fazer?">
         <div style="display: flex; gap: 8px;">
@@ -53,7 +51,6 @@
         </div>
         <button id="btnSalvar">Salvar Tudo</button>
     </div>
-
     <div id="secaoLista">
         <div id="listaTarefas">Sincronizando...</div>
     </div>
@@ -78,6 +75,21 @@
 </div>
 
 <script type="module">
+    // LÓGICA DE ATUALIZAÇÃO AUTOMÁTICA
+    async function checkUpdate() {
+        if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for (let reg of regs) {
+                await reg.update();
+                if (reg.waiting) {
+                    reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                    window.location.reload();
+                }
+            }
+        }
+    }
+    window.addEventListener('load', checkUpdate);
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
@@ -95,8 +107,7 @@
     const db = getFirestore(app);
     const messaging = getMessaging(app);
 
-    let filtroDataAtual = 'hoje';
-
+    // COMPRESSÃO DE FOTO PARA FIREBASE
     const comprimirFoto = (file) => {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -118,11 +129,12 @@
         });
     };
 
+    // ALARME COM CHAVE VAPID ATUALIZADA
     window.solicitarNotificacao = async () => {
         const permission = await Notification.requestPermission();
         if (permission === "granted") {
             try {
-                // CHAVE ATUALIZADA DO SEU CONSOLE
+                // Chave capturada do seu console
                 const token = await getToken(messaging, { 
                     vapidKey: 'BKj4JLMSHmF3LHBQNU-NKVdlIaLBnhOow5qF5BqbTDssWgEM5R-g9v7hujX8iUC_bmEq5SligyEA53wo_cx8HUE' 
                 });
@@ -130,7 +142,7 @@
                 console.log("Token:", token);
             } catch (err) { 
                 console.error(err);
-                alert("Erro ao obter token. Ative o Authentication no Firebase conforme orientado."); 
+                alert("Erro ao obter token. Certifique-se de adicionar rafa91pinati.github.io no Authentication."); 
             }
         } else { alert("Permita as notificações."); }
     };
@@ -166,8 +178,9 @@
             lista.innerHTML = "";
             snap.forEach(d => {
                 const t = d.data();
+                const filtroData = document.getElementById('dataSeletor').value;
                 if (catFiltro !== "Geral" && t.categoria !== catFiltro) return;
-                if (filtroDataAtual !== 'semanal' && t.dataString !== dataFiltro) return;
+                if (t.dataString !== filtroData) return;
                 lista.innerHTML += `<div class="tarefa-item" style="border-left-color:${t.corCategoria || '#2196F3'}">
                     <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
                     <small style="color:${t.corCategoria};font-weight:bold">${t.categoria || 'Geral'}</small>
@@ -202,9 +215,8 @@
     window.setarData = (tipo, el) => {
         const input = document.getElementById('dataSeletor');
         document.querySelectorAll('.btn-date').forEach(b => b.classList.remove('ativo'));
-        if (tipo === 'hoje') { input.value = new Date().toISOString().split('T')[0]; el.classList.add('ativo'); filtroDataAtual = 'hoje'; }
-        else if (tipo === 'amanha') { const am = new Date(); am.setDate(am.getDate()+1); input.value = am.toISOString().split('T')[0]; el.classList.add('ativo'); filtroDataAtual = 'amanha'; }
-        else if (tipo === 'semanal') { el.classList.add('ativo'); filtroDataAtual = 'semanal'; }
+        if (tipo === 'hoje') { input.value = new Date().toISOString().split('T')[0]; el.classList.add('ativo'); }
+        else if (tipo === 'amanha') { const am = new Date(); am.setDate(am.getDate()+1); input.value = am.toISOString().split('T')[0]; el.classList.add('ativo'); }
         carregarTarefas();
     };
 
