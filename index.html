@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-	<link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Base de Validação - Agenda</title>
@@ -37,56 +37,36 @@
     const statusTxt = document.getElementById('status');
 
     btn.onclick = async () => {
-    try {
-        btn.innerText = "SINCRONIZANDO...";
-        btn.disabled = true;
+        try {
+            btn.innerText = "SINCRONIZANDO...";
+            btn.disabled = true;
 
-        // 1️⃣ LOGIN ANÔNIMO
-        const userCredential = await signInAnonymously(auth);
-        await userCredential.user.getIdToken(true);
+            // 1. LOGIN E RENOVAÇÃO (Cura a Falha Técnica)
+            const userCredential = await signInAnonymously(auth);
+            await userCredential.user.getIdToken(true);
 
-        // 2️⃣ PEDIR PERMISSÃO DE NOTIFICAÇÃO (ITEM 5)
-        const permission = await Notification.requestPermission();
-        if (permission !== "granted") {
-            throw new Error("Permissão de notificação negada");
-        }
+            // 2. PERMISSÃO
+            const permission = await Notification.requestPermission();
+            if (permission !== "granted") throw new Error("Permissão negada");
 
-        // 3️⃣ REGISTRAR SERVICE WORKER CORRETAMENTE (ITEM 3)
-        const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-        await navigator.serviceWorker.ready;
+            // 3. REGISTRO (Caminho relativo ./ para o GitHub Pages)
+            const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+            await navigator.serviceWorker.ready;
 
-        // 4️⃣ GERAR TOKEN
-        const token = await getToken(messaging, { 
-            vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
-            serviceWorkerRegistration: reg
-        });
-
-        if (token) {
-            statusTxt.innerText = "CONECTADO COM SUCESSO!";
-            btn.style.background = "#4CAF50";
-            btn.innerText = "CONEXÃO ATIVA";
-            alert("SUCESSO! Alarme pronto para uso.");
-            console.log("Seu Token:", token);
-        } else {
-            throw new Error("Token não foi gerado");
-        }
-
-    } catch (err) {
-        console.error(err);
-        statusTxt.innerText = "FALHA TÉCNICA";
-        alert("Erro: " + err.message);
-        btn.disabled = false;
-        btn.innerText = "TENTAR NOVAMENTE";
-    }
-};
+            // 4. GERAR TOKEN
+            const token = await getToken(messaging, { 
+                vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
+                serviceWorkerRegistration: reg
+            });
 
             if (token) {
                 statusTxt.innerText = "CONECTADO COM SUCESSO!";
                 btn.style.background = "#4CAF50";
                 btn.innerText = "CONEXÃO ATIVA";
-                alert("SUCESSO! Alarme pronto para uso.");
-                console.log("Seu Token:", token);
+                alert("SUCESSO! O alarme da sua agenda está pronto.");
+                console.log("Token:", token);
             }
+
         } catch (err) {
             console.error(err);
             statusTxt.innerText = "FALHA TÉCNICA";
