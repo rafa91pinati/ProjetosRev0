@@ -4,72 +4,42 @@
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minha Agenda Inteligente Pro</title>
+    <title>Minha Agenda Inteligente</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 10px; }
-        .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         
-        /* CABEÇALHO GRID - FORÇA TUDO NA MESMA LINHA */
+        /* CABEÇALHO GRID - TRAVADO PARA NÃO ROLAR */
         .timeline-header { 
             display: grid; 
             grid-template-columns: 1fr 1fr 1fr 1.5fr auto; 
             gap: 4px; 
             margin-bottom: 15px; 
-            align-items: center; 
-            width: 100%;
-            box-sizing: border-box;
-            overflow: hidden;
+            align-items: center;
         }
 
         .btn-date { 
-            width: 100%; 
-            padding: 10px 0; 
-            border-radius: 8px; 
-            border: 1px solid #ddd; 
-            background: #fff; 
-            cursor: pointer; 
-            font-size: 0.65rem; 
-            font-weight: bold; 
-            text-align: center;
-            white-space: nowrap;
+            width: 100%; padding: 10px 0; border-radius: 8px; border: 1px solid #ddd; 
+            background: #fff; cursor: pointer; font-size: 0.65rem; font-weight: bold; text-align: center;
         }
         .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
 
-        #dataSeletor { 
-            width: 100%; 
-            padding: 8px 2px; 
-            border-radius: 8px; 
-            border: 1px solid #ddd; 
-            font-size: 0.65rem;
-            height: 38px;
-            box-sizing: border-box;
-        }
+        #dataSeletor { width: 100%; padding: 8px 2px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.65rem; height: 38px; }
 
-        .btn-config { background: none; border: none; font-size: 1.2em; cursor: pointer; padding: 0 4px; }
+        .btn-config { background: none; border: none; font-size: 1.2em; cursor: pointer; }
 
-        .category-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
-        .btn-cat { white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd; background: #f9f9f9; cursor: pointer; font-size: 0.8em; }
-        .btn-cat.ativo { background: #333; color: white; border-color: #333; }
-
+        /* FORMULÁRIO */
         .secao-card { background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
-        h3 { margin-top: 0; font-size: 0.9em; color: #555; display: flex; justify-content: space-between; align-items: center; }
         input[type="text"], input[type="time"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button#btnSalvar { background: #4CAF50; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
+        #btnSalvar { background: #4CAF50; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
         
-        .tarefa-item { background: #fff; margin-bottom: 10px; padding: 12px; border-radius: 10px; border-left: 6px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
-        .tarefa-concluida { opacity: 0.5; text-decoration: line-through; }
+        /* LISTA */
+        .tarefa-item { background: #fff; margin-bottom: 10px; padding: 12px; border-radius: 10px; border-left: 6px solid #2196F3; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
         .btn-excluir { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #ff4d4d; font-size: 1.1em; cursor: pointer; }
-        img { max-width: 100%; border-radius: 8px; margin-top: 10px; display: block; }
-
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-        .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; position: relative; }
-        .escondido { display: none !important; }
         
-        #btnInstalarApp { 
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; 
-            background: #2196F3; color: white; border: none; padding: 15px 25px; border-radius: 30px; 
-            font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none; 
-        }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .escondido { display: none !important; }
+        .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; }
     </style>
 </head>
 <body>
@@ -83,42 +53,30 @@
         <button class="btn-config" onclick="abrirConfig()">⚙️</button>
     </div>
 
-    <div class="category-scroll" id="listaBotoesCat"></div>
-    <input type="hidden" id="categoriaSelecionada" value="Geral">
-    <input type="hidden" id="corSelecionada" value="#4CAF50">
-
     <div class="secao-card">
-        <h3>📝 Nova Tarefa <span id="txtDataSelecionada"></span></h3>
-        <input type="text" id="descTask" placeholder="O que precisa ser feito?">
-        <div style="display: flex; gap: 8px;">
-            <input type="time" id="horaTask" style="flex: 1;">
-            <input type="file" id="fotoTask" accept="image/*" style="flex: 1.5; font-size: 0.7em; align-self: center;">
-        </div>
+        <h3 style="margin-top:0; font-size: 0.9em;">📝 Nova Tarefa</h3>
+        <input type="text" id="descTask" placeholder="O que vamos fazer?">
+        <input type="time" id="horaTask">
         <button id="btnSalvar">Salvar Tudo</button>
     </div>
 
     <div id="secaoLista">
-        <h3>📋 Minhas Tarefas</h3>
+        <h3 style="font-size: 0.9em;">📋 Atividades <span id="labelData"></span></h3>
         <div id="listaTarefas">Carregando tarefas...</div>
     </div>
 </div>
 
-<button id="btnInstalarApp">📲 Instalar como Aplicativo</button>
-
 <div id="modalConfig" class="modal escondido">
     <div class="modal-content">
-        <button onclick="fecharConfig()" style="position: absolute; right: 15px; top: 15px; border:none; background:none; font-size:1.2em; cursor:pointer;">✕</button>
-        <h4>Configuração de Alerta</h4>
-        <input type="number" id="inputMinutosAlarme" value="15">
-        <button onclick="solicitarNotificacao()" style="background:#2196F3; width:100%; color:white; border:none; padding:10px; border-radius:8px;">Ativar Alarme no Celular</button>
-        <hr>
-        <div id="listaExcluirCat" style="max-height: 150px; overflow-y: auto;"></div>
+        <button onclick="fecharConfig()" style="float:right; border:none; background:none; font-size:1.2em;">✕</button>
+        <h4>Configurar Notificações</h4>
+        <button onclick="solicitarNotificacao()" style="width:100%; padding:10px; background:#2196F3; color:white; border:none; border-radius:8px;">Ativar Alarme</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
     const firebaseConfig = {
@@ -136,93 +94,100 @@
 
     let filtroDataAtual = 'hoje';
 
-    // FUNÇÕES GLOBAIS
+    // FUNÇÕES DE INTERFACE
     window.abrirConfig = () => document.getElementById('modalConfig').classList.remove('escondido');
     window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
 
     window.setarData = (tipo, el) => {
         const input = document.getElementById('dataSeletor');
         document.querySelectorAll('.btn-date').forEach(b => b.classList.remove('ativo'));
-        if (tipo === 'hoje') { input.value = new Date().toISOString().split('T')[0]; el.classList.add('ativo'); filtroDataAtual = 'hoje'; }
-        else if (tipo === 'amanha') { const am = new Date(); am.setDate(am.getDate()+1); input.value = am.toISOString().split('T')[0]; el.classList.add('ativo'); filtroDataAtual = 'amanha'; }
-        else if (tipo === 'semanal') { el.classList.add('ativo'); filtroDataAtual = 'semanal'; }
-        else { filtroDataAtual = 'custom'; }
-        atualizarLabelData(); carregarTarefas();
+        
+        if (tipo === 'hoje') {
+            input.value = new Date().toISOString().split('T')[0];
+            if(el) el.classList.add('ativo');
+            filtroDataAtual = 'hoje';
+        } else if (tipo === 'amanha') {
+            const am = new Date(); am.setDate(am.getDate() + 1);
+            input.value = am.toISOString().split('T')[0];
+            if(el) el.classList.add('ativo');
+            filtroDataAtual = 'amanha';
+        } else if (tipo === 'semanal') {
+            if(el) el.classList.add('ativo');
+            filtroDataAtual = 'semanal';
+        } else {
+            filtroDataAtual = 'custom';
+        }
+        carregarTarefas();
     };
 
-    function atualizarLabelData() {
-        const val = document.getElementById('dataSeletor').value;
-        if(val) { const d = val.split('-'); document.getElementById('txtDataSelecionada').innerText = `(${d[2]}/${d[1]})`; }
-    }
-
-    // CARREGAR TAREFAS
+    // BUSCAR TAREFAS NO FIREBASE
     async function carregarTarefas() {
         const lista = document.getElementById('listaTarefas');
         const dataFiltro = document.getElementById('dataSeletor').value;
+        lista.innerHTML = "Buscando...";
+
         try {
             const q = query(collection(db, "tarefas"), orderBy("dataCriacao", "desc"));
             const snap = await getDocs(q);
             lista.innerHTML = "";
-            let temTarefa = false;
+            let contador = 0;
+
             snap.forEach(d => {
                 const t = d.data();
+                // Filtro de data
                 if (filtroDataAtual !== 'semanal' && t.dataString !== dataFiltro) return;
-                temTarefa = true;
-                const cor = t.corCategoria || "#ccc";
+                
+                contador++;
                 lista.innerHTML += `
-                    <div class="tarefa-item" style="border-left-color: ${cor}">
+                    <div class="tarefa-item">
                         <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
-                        <small style="color:${cor}; font-weight:bold">${t.categoria || 'Geral'}</small>
-                        ${t.hora ? `<span style="float:right; font-size:0.8em;">⏰ ${t.hora}</span>` : ''}
-                        <p>${t.descricao}</p>
-                        ${t.fotoUrl ? `<img src="${t.fotoUrl}">` : ""}
+                        <strong>${t.hora || '--:--'}</strong> - ${t.descricao}
                     </div>`;
             });
-            if(!temTarefa) lista.innerHTML = "Nenhuma tarefa para este dia.";
-        } catch (e) { 
-            console.error(e); 
-            lista.innerHTML = "Erro ao carregar.";
+
+            if(contador === 0) lista.innerHTML = "Nada agendado para este dia.";
+        } catch (e) {
+            console.error(e);
+            lista.innerHTML = "Erro ao carregar do banco.";
         }
     }
 
-    // SALVAR TAREFA
+    // SALVAR NOVA TAREFA
     document.getElementById('btnSalvar').onclick = async () => {
         const desc = document.getElementById('descTask').value;
         const hora = document.getElementById('horaTask').value;
         const data = document.getElementById('dataSeletor').value;
-        if(!desc) return alert("Digite a descrição!");
-        
-        const btn = document.getElementById('btnSalvar');
-        btn.innerText = "Salvando..."; btn.disabled = true;
+
+        if(!desc || !data) return alert("Preencha a descrição e a data!");
 
         try {
             await addDoc(collection(db, "tarefas"), {
-                descricao: desc, hora: hora, dataString: data,
-                dataCriacao: new Date(), categoria: "Geral"
+                descricao: desc,
+                hora: hora,
+                dataString: data,
+                dataCriacao: new Date()
             });
             document.getElementById('descTask').value = "";
             carregarTarefas();
         } catch (e) { alert("Erro ao salvar!"); }
-        btn.innerText = "Salvar Tudo"; btn.disabled = false;
     };
 
     window.excluirTask = async (id) => {
-        if(confirm("Excluir tarefa?")) {
+        if(confirm("Excluir?")) {
             await deleteDoc(doc(db, "tarefas", id));
             carregarTarefas();
         }
     };
 
-    // INSTALAÇÃO E NOTIFICAÇÃO
     window.solicitarNotificacao = async () => {
         const permission = await Notification.requestPermission();
         if (permission === "granted") {
-            const token = await getToken(messaging, { vapidKey: 'COLE_SUA_VAPID_AQUI' });
-            alert("Alarme Ativado!");
+            const token = await getToken(messaging, { vapidKey: 'COLE_AQUI_SUA_VAPID' });
+            alert("Notificações Prontas!");
         }
     };
 
-    // INICIAR
+    // INICIAR APP
     setarData('hoje', document.getElementById('btnHoje'));
 </script>
 </body>
