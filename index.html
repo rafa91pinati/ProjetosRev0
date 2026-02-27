@@ -34,59 +34,60 @@
 
     const btn = document.getElementById('btnAlarme');
     const statusTxt = document.getElementById('status');
-    const detalhesTxt = document.getElementById('detalhes');
 
-    // Inicia a validação assim que a página abre
-    signInAnonymously(auth).catch(err => {
-        statusTxt.innerText = "ERRO DE VALIDAÇÃO";
-        detalhesTxt.innerText = "O Google não respondeu. Verifique sua internet.";
-    });
+    // 1. TENTA LOGIN IMEDIATO (Sincroniza com seu domínio autorizado)
+    const iniciarLogin = async () => {
+        try {
+            await signInAnonymously(auth);
+            console.log("Tentativa de login enviada...");
+        } catch (e) { console.error("Erro no handshake:", e); }
+    };
 
-    // SÓ LIBERA O BOTÃO QUANDO O LOGIN FOR CONFIRMADO
+    // 2. MONITOR REAL: Libera o botão APENAS quando o Google der o OK
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            console.log("Usuário autenticado:", user.uid);
             statusTxt.innerText = "SISTEMA PRONTO";
-            detalhesTxt.innerText = "O Google validou sua identidade.";
             btn.disabled = false;
             btn.innerText = "ATIVAR ALARME AGORA";
             btn.style.background = "#2196F3";
-            btn.style.color = "white";
         }
     });
 
+    // Executa o login ao abrir a página
+    iniciarLogin();
+
     btn.onclick = async () => {
         try {
+            // Se por algum motivo o sistema ainda disser que não está logado, força agora
+            if (!auth.currentUser) {
+                statusTxt.innerText = "REVALIDANDO...";
+                await signInAnonymously(auth);
+            }
+
             btn.innerText = "SINCRONIZANDO...";
-            btn.disabled = true;
-
             const permission = await Notification.requestPermission();
-            if (permission !== "granted") throw new Error("Permissão de notificação negada.");
+            if (permission !== "granted") throw new Error("Permissão negada.");
 
-            // Resolve o erro de pasta do GitHub
+            // Registro na pasta ProjetosRev0
             const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js', {
                 scope: '/ProjetosRev0/'
             });
 
-            // CHAVE PÚBLICA REAL DO SEU PRINT
+            // Chave VAPID correta (BDyyehg3...)
             const token = await getToken(messaging, { 
                 vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
                 serviceWorkerRegistration: reg
             });
 
             if (token) {
-                statusTxt.innerText = "CONECTADO COM SUCESSO!";
-                detalhesTxt.innerText = "Seu alarme está ativo e pronto.";
-                alert("SUCESSO! Alarme configurado.");
-                console.log("Token Gerado:", token);
+                statusTxt.innerText = "SISTEMA ATIVADO!";
+                btn.style.background = "#4CAF50";
+                alert("SUCESSO! Alarme pronto.");
             }
         } catch (err) {
-            console.error(err);
             statusTxt.innerText = "FALHA TÉCNICA";
-            detalhesTxt.innerText = err.message;
+            alert("Erro: " + err.message);
             btn.disabled = false;
-            btn.innerText = "TENTAR NOVAMENTE";
-            btn.style.background = "#f44336";
         }
     };
 </script>
