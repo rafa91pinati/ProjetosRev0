@@ -17,18 +17,17 @@
         .btn-cat { white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd; background: #f9f9f9; cursor: pointer; font-size: 0.85em; }
         .btn-cat.ativo { background: #333; color: white; }
         .secao-card { background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
-        input[type="text"], input[type="time"], input[type="number"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        input[type="text"], input[type="time"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         #btnSalvar { background: #4CAF50; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
         .tarefa-item { background: #fff; margin-bottom: 10px; padding: 12px; border-radius: 10px; border-left: 6px solid #2196F3; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
         .btn-excluir { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #ff4d4d; cursor: pointer; }
-        img { max-width: 100%; border-radius: 10px; margin-top: 10px; display: block; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        img { max-width: 100%; border-radius: 10px; margin-top: 10px; display: block; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
         .escondido { display: none !important; }
         .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; position: relative; }
         .modal-tabs { display: flex; justify-content: space-around; margin-bottom: 15px; border-bottom: 1px solid #eee; }
         .tab-btn { background: none; border: none; padding: 10px; cursor: pointer; opacity: 0.5; font-size: 1.5em; }
         .tab-btn.ativo { opacity: 1; border-bottom: 3px solid #2196F3; }
-        .item-excluir-cat { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
@@ -73,18 +72,17 @@
             <button onclick="solicitarNotificacao()" style="width:100%; padding:12px; background:#2196F3; color:white; border:none; border-radius:8px;">Ativar Alarme</button>
         </div>
         <div id="conteudoCategorias" class="escondido">
-            <h4>Excluir Categorias</h4>
             <div id="listaExcluirCat"></div>
         </div>
     </div>
 </div>
 
 <script type="module">
-    // --- LÓGICA DE REFRESH FORÇADO ---
+    // --- LÓGICA DE ATUALIZAÇÃO ---
     async function checkUpdate() {
         if ('serviceWorker' in navigator) {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            for (let reg of registrations) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for (let reg of regs) {
                 await reg.update();
                 if (reg.waiting) {
                     reg.waiting.postMessage({ type: 'SKIP_WAITING' });
@@ -136,15 +134,19 @@
         });
     };
 
-    // ALARME COM SUA VAPID KEY
+    // ALARME COM SUA CHAVE VAPID
     window.solicitarNotificacao = async () => {
         const permission = await Notification.requestPermission();
         if (permission === "granted") {
             try {
+                // INTEGRADA SUA CHAVE: maD1HtPoKFN0DkDXzHEGffsJ6Xv_lRvagryZuhRJNu8
                 const token = await getToken(messaging, { vapidKey: 'maD1HtPoKFN0DkDXzHEGffsJ6Xv_lRvagryZuhRJNu8' });
                 alert("Alarme ativado com sucesso!");
                 console.log("Token:", token);
-            } catch (err) { alert("Erro ao obter token."); }
+            } catch (err) { 
+                console.error(err);
+                alert("Erro ao obter token. Verifique se o Service Worker está instalado."); 
+            }
         } else { alert("Permita as notificações."); }
     };
 
@@ -163,7 +165,7 @@
         container.innerHTML = "";
         snap.forEach(d => {
             const c = d.data();
-            container.innerHTML += `<div class="item-excluir-cat"><span>${c.nome}</span><button onclick="removerCategoria('${d.id}')" style="color:red; border:none; background:none; cursor:pointer;">🗑️</button></div>`;
+            container.innerHTML += `<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #eee;"><span>${c.nome}</span><button onclick="removerCategoria('${d.id}')" style="color:red;border:none;background:none;">🗑️</button></div>`;
         });
     }
 
@@ -181,10 +183,9 @@
                 const t = d.data();
                 if (catFiltro !== "Geral" && t.categoria !== catFiltro) return;
                 if (filtroDataAtual !== 'semanal' && t.dataString !== dataFiltro) return;
-                const cor = t.corCategoria || '#2196F3';
-                lista.innerHTML += `<div class="tarefa-item" style="border-left-color:${cor}">
+                lista.innerHTML += `<div class="tarefa-item" style="border-left-color:${t.corCategoria || '#2196F3'}">
                     <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
-                    <small style="color:${cor};font-weight:bold">${t.categoria || 'Geral'}</small>
+                    <small style="color:${t.corCategoria};font-weight:bold">${t.categoria || 'Geral'}</small>
                     <span style="float:right;">⏰ ${t.hora || '--:--'}</span>
                     <p style="margin:8px 0;">${t.descricao}</p>
                     ${t.fotoUrl ? `<img src="${t.fotoUrl}">` : ""}
@@ -233,10 +234,8 @@
     document.getElementById('btnSalvar').onclick = async () => {
         const desc = document.getElementById('descTask').value, hora = document.getElementById('horaTask').value, data = document.getElementById('dataSeletor').value, fileInput = document.getElementById('fotoTask');
         if(!desc || !data) return alert("Preencha tudo!");
-        
         let btn = document.getElementById('btnSalvar');
         btn.innerText = "Enviando..."; btn.disabled = true;
-
         try {
             let base64 = fileInput.files[0] ? await comprimirFoto(fileInput.files[0]) : "";
             await addDoc(collection(db, "tarefas"), {
