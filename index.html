@@ -112,18 +112,24 @@
         else{cC.classList.remove('escondido');cA.classList.add('escondido');tC.classList.add('ativo');tA.classList.remove('ativo');}
     };
 
-    window.solicitarNotificacao = async () => {
-    // 1. Pede permissão para mostrar notificações
+window.solicitarNotificacao = async () => {
+    // 1. Pedir permissão primeiro
     const permission = await Notification.requestPermission();
     
     if (permission === "granted") {
         try {
-            // 2. REALIZA O LOGIN ANÔNIMO (Isso limpa o erro das suas fotos)
-            // Importante: certifique-se que o 'auth' está inicializado no seu script
-            await signInAnonymously(auth); 
-            console.log("Usuário autenticado anonimamente.");
+            // Mostra no console que iniciou o processo
+            console.log("Iniciando autenticação para obter token...");
 
-            // 3. OBTÉM O TOKEN COM A CHAVE DO SEU PRINT
+            // 2. Garante que o usuário está logado antes de prosseguir
+            // O signInAnonymously retorna uma promessa que precisamos aguardar
+            const userCredential = await signInAnonymously(auth);
+            console.log("Usuário autenticado com ID:", userCredential.user.uid);
+
+            // 3. Pequena pausa de 500ms para o Firebase propagar a autenticação
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // 4. Busca o token usando a chave VAPID correta do seu print
             const token = await getToken(messaging, { 
                 vapidKey: 'BKj4JLMSHmF3LHBQNU-NKVdlIaLBnhOow5qF5BqbTDssWgEM5R-g9v7hujX8iUC_bmEq5SligyEA53wo_cx8HUE' 
             });
@@ -132,14 +138,17 @@
                 alert("Alarme ativado com sucesso!");
                 console.log("Token gerado:", token);
             } else {
-                alert("Não foi possível gerar o token. Tente novamente.");
+                throw new Error("Token não gerado pelo navegador.");
             }
+
         } catch (err) { 
-            console.error("Erro detalhado do Firebase:", err);
-            alert("Erro técnico: " + err.message); 
+            console.error("Erro técnico detalhado:", err);
+            // Se cair aqui, o erro 'auth/operation-not-allowed' pode significar
+            // que o Firebase ainda não propagou a ativação do login anônimo.
+            alert("Falha técnica ao sincronizar. Tente clicar novamente em 5 segundos."); 
         }
     } else {
-        alert("Você precisa permitir as notificações no navegador para o alarme funcionar.");
+        alert("As notificações estão bloqueadas no seu navegador.");
     }
 };
 
