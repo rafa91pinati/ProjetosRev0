@@ -42,7 +42,7 @@
 
       const VAPID_KEY = "BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8";
       const SW_PATH  = "/ProjetosRev0/firebase-messaging-sw.js";
-      const SW_SCOPE = "/ProjetosRev0/";
+const SW_SCOPE = "/ProjetosRev0/";
 
       const btn = document.getElementById("btnConectar");
       const btnReset = document.getElementById("btnReset");
@@ -110,6 +110,12 @@
           log("Registrando SW:", SW_PATH, "Scope:", SW_SCOPE);
           const reg = await navigator.serviceWorker.register(SW_PATH, { scope: SW_SCOPE });
           await navigator.serviceWorker.ready;
+		  
+		  if (!navigator.serviceWorker.controller) {
+  log("SW instalado. Recarregando 1x...");
+  setTimeout(() => location.reload(), 300);
+  return;
+}
 
           // 1) Força Installations (gera credencial necessária)
           log("Inicializando Firebase Installations...");
