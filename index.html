@@ -16,7 +16,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
     import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
     const firebaseConfig = {
@@ -35,32 +35,31 @@
     const btn = document.getElementById('btnConectar');
     const statusTxt = document.getElementById('status');
 
-    // Tenta o login anônimo assim que a página carrega
-    signInAnonymously(auth).catch(err => console.error("Falha no login inicial", err));
-
-    // Monitora a identidade: só libera o alarme se o Google confirmar quem você é
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            statusTxt.innerText = "SISTEMA PRONTO";
-            btn.disabled = false;
-            btn.style.background = "#4CAF50";
-        }
-    });
+    // Libera o botão imediatamente para você poder agir
+    statusTxt.innerText = "SISTEMA AGUARDANDO";
+    btn.disabled = false;
+    btn.innerText = "CLIQUE PARA CONECTAR GOOGLE";
+    btn.style.background = "#2196F3";
+    btn.style.color = "white";
+    btn.style.cursor = "pointer";
 
     btn.onclick = async () => {
         try {
-            btn.innerText = "CONECTANDO...";
+            btn.innerText = "VALIDANDO...";
+            btn.disabled = true;
+
+            // 1. LOGIN NA HORA DO CLIQUE (Resolve o erro de credencial ausente)
+            const userCredential = await signInAnonymously(auth);
+            console.log("Validado com ID:", userCredential.user.uid);
+
+            // 2. PEDIR PERMISSÃO
             const permission = await Notification.requestPermission();
-            if (permission !== "granted") throw new Error("Permissão negada.");
+            if (permission !== "granted") throw new Error("Permissão de alarme negada.");
 
-            // Limpa registros antigos para evitar o erro de credencial
-            const regs = await navigator.serviceWorker.getRegistrations();
-            for(let r of regs) { await r.unregister(); }
-
-            // Registra o novo alarme
+            // 3. REGISTRAR SERVIÇO (Caminho da sua pasta no GitHub)
             const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
 
-            // Usa a chave pública GIGANTE que você pegou no console
+            // 4. GERAR TOKEN COM A CHAVE PÚBLICA (BDyyehg3...)
             const token = await getToken(messaging, { 
                 vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
                 serviceWorkerRegistration: reg
@@ -68,11 +67,18 @@
 
             if (token) {
                 statusTxt.innerText = "SISTEMA ATIVADO!";
-                alert("SUCESSO! Alarme conectado.");
+                btn.innerText = "CONECTADO COM SUCESSO";
+                btn.style.background = "#4CAF50";
+                alert("SUCESSO! Alarme pronto para tocar.");
+                console.log("Token:", token);
             }
         } catch (err) {
-            statusTxt.innerText = "FALHA TÉCNICA";
-            alert("Erro: " + err.message);
+            console.error(err);
+            statusTxt.innerText = "FALHA NA CONEXÃO";
+            btn.disabled = false;
+            btn.innerText = "TENTAR NOVAMENTE";
+            btn.style.background = "#f44336";
+            alert("Erro Técnico: " + err.message);
         }
     };
 </script>
