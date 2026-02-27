@@ -10,13 +10,10 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Sincronização imediata para evitar erros de avaliação
+// Força o Service Worker a se ativar imediatamente
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', () => self.clients.claim());
 
 messaging.onBackgroundMessage((payload) => {
-    self.registration.showNotification(payload.notification.title, {
-        body: payload.notification.body,
-        icon: 'favicon.ico'
-    });
+    console.log('Mensagem em segundo plano:', payload);
 });
