@@ -113,24 +113,33 @@
     };
 
     window.solicitarNotificacao = async () => {
+    // 1. Pede permissão para mostrar notificações
     const permission = await Notification.requestPermission();
+    
     if (permission === "granted") {
         try {
-            // Isso resolve o erro das suas imagens
+            // 2. REALIZA O LOGIN ANÔNIMO (Isso limpa o erro das suas fotos)
+            // Importante: certifique-se que o 'auth' está inicializado no seu script
             await signInAnonymously(auth); 
-            
+            console.log("Usuário autenticado anonimamente.");
+
+            // 3. OBTÉM O TOKEN COM A CHAVE DO SEU PRINT
             const token = await getToken(messaging, { 
                 vapidKey: 'BKj4JLMSHmF3LHBQNU-NKVdlIaLBnhOow5qF5BqbTDssWgEM5R-g9v7hujX8iUC_bmEq5SligyEA53wo_cx8HUE' 
             });
-            
-            alert("Alarme ativado com sucesso!");
-            console.log("Token gerado:", token);
+
+            if (token) {
+                alert("Alarme ativado com sucesso!");
+                console.log("Token gerado:", token);
+            } else {
+                alert("Não foi possível gerar o token. Tente novamente.");
+            }
         } catch (err) { 
-            console.error("Erro detalhado:", err);
-            alert("Falha na autenticação. Verifique se o provedor 'Anônimo' está ativo no Firebase."); 
+            console.error("Erro detalhado do Firebase:", err);
+            alert("Erro técnico: " + err.message); 
         }
     } else {
-        alert("Você precisa permitir as notificações no seu navegador.");
+        alert("Você precisa permitir as notificações no navegador para o alarme funcionar.");
     }
 };
 
