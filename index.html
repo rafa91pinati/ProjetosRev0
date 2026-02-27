@@ -4,35 +4,48 @@
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minha Agenda Inteligente Pro</title>
+    <title>Minha Agenda Inteligente</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
         .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         
-        /* CABEÇALHO GRID RESPONSIVO */
-        .timeline-header { display: grid; grid-template-columns: 1fr 1fr 1fr 1.5fr auto; gap: 4px; margin-bottom: 15px; align-items: center; }
-        .btn-date { width: 100%; padding: 10px 0; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.65rem; font-weight: bold; text-align: center; }
-        .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
-        #dataSeletor { width: 100%; padding: 8px 2px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.65rem; height: 38px; }
-        .btn-config { background: none; border: none; font-size: 1.2em; cursor: pointer; }
+        /* CABEÇALHO REAJUSTADO */
+        .timeline-header { 
+            display: grid; 
+            grid-template-columns: 0.8fr 0.8fr 0.8fr 2fr auto; /* Aumentei o espaço da data (2fr) */
+            gap: 5px; 
+            margin-bottom: 15px; 
+            align-items: center;
+        }
 
-        /* CATEGORIAS */
-        .category-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
-        .btn-cat { white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd; background: #f9f9f9; cursor: pointer; font-size: 0.8em; }
+        .btn-date { 
+            width: 100%; padding: 10px 0; border-radius: 8px; border: 1px solid #ddd; 
+            background: #fff; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-align: center;
+        }
+        .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
+
+        #dataSeletor { 
+            width: 100%; padding: 8px 5px; border-radius: 8px; border: 1px solid #ddd; 
+            font-size: 0.85rem; height: 40px; box-sizing: border-box; background: #f9f9f9;
+        }
+
+        .btn-config { background: none; border: none; font-size: 1.3em; cursor: pointer; padding: 0 5px; }
+
+        /* CATEGORIAS RESTAURADAS */
+        .category-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
+        .btn-cat { white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd; background: #f9f9f9; cursor: pointer; font-size: 0.85em; }
         .btn-cat.ativo { background: #333; color: white; border-color: #333; }
 
-        /* FORMULÁRIO E TAREFAS */
+        /* CARDS DE TAREFAS */
         .secao-card { background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
-        input[type="text"], input[type="time"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        #btnSalvar { background: #4CAF50; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
+        input[type="text"], input[type="time"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        #btnSalvar { background: #4CAF50; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; font-size: 1rem; }
         
-        .tarefa-item { background: #fff; margin-bottom: 10px; padding: 12px; border-radius: 10px; border-left: 6px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
-        .btn-excluir { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #ff4d4d; font-size: 1.1em; cursor: pointer; }
-        img { max-width: 100%; border-radius: 8px; margin-top: 10px; display: block; border: 1px solid #eee; }
-
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .tarefa-item { background: #fff; margin-bottom: 12px; padding: 15px; border-radius: 12px; border-left: 6px solid #2196F3; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; }
+        .btn-excluir { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #aaa; font-size: 1.2em; cursor: pointer; }
+        img { max-width: 100%; border-radius: 10px; margin-top: 10px; display: block; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
         .escondido { display: none !important; }
-        .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; }
     </style>
 </head>
 <body>
@@ -51,33 +64,24 @@
     <input type="hidden" id="corSelecionada" value="#4CAF50">
 
     <div class="secao-card">
-        <input type="text" id="descTask" placeholder="Descrição da tarefa...">
+        <h3 style="margin-top:0; font-size: 1em;">📝 Nova Tarefa</h3>
+        <input type="text" id="descTask" placeholder="O que vamos fazer?">
         <div style="display: flex; gap: 8px;">
             <input type="time" id="horaTask" style="flex: 1;">
-            <input type="file" id="fotoTask" accept="image/*" style="flex: 1.5; font-size: 0.7em; align-self: center;">
+            <input type="file" id="fotoTask" accept="image/*" style="flex: 1.5; font-size: 0.8em; align-self: center;">
         </div>
         <button id="btnSalvar">Salvar Tudo</button>
     </div>
 
     <div id="secaoLista">
-        <div id="listaTarefas">Carregando tarefas...</div>
-    </div>
-</div>
-
-<div id="modalConfig" class="modal escondido">
-    <div class="modal-content">
-        <button onclick="fecharConfig()" style="float:right; border:none; background:none; font-size:1.2em;">✕</button>
-        <h4>Configurar App</h4>
-        <button onclick="solicitarNotificacao()" style="width:100%; padding:10px; background:#2196F3; color:white; border:none; border-radius:8px;">Ativar Alarme</button>
-        <hr>
-        <div id="listaExcluirCat"></div>
+        <h3 style="font-size: 1em;">📋 Atividades</h3>
+        <div id="listaTarefas">Carregando atividades...</div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-    import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+    import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
@@ -90,12 +94,11 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const messaging = getMessaging(app);
 
     let filtroDataAtual = 'hoje';
 
-    // COMPRESSÃO DE FOTO
-    const redimensionarFoto = (file) => {
+    // COMPRESSÃO DE IMAGEM
+    const comprimirFoto = (file) => {
         return new Promise((resolve) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -104,19 +107,19 @@
                 img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 600;
-                    let width = img.width, height = img.height;
-                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                    canvas.width = width; canvas.height = height;
                     const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.6));
+                    const larguraMax = 600;
+                    const proporcao = larguraMax / img.width;
+                    canvas.width = larguraMax;
+                    canvas.height = img.height * proporcao;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
                 };
             };
         });
     };
 
-    // LOGICA DE CATEGORIAS
+    // CATEGORIAS
     window.selecionarCat = (nome, cor, el) => {
         document.querySelectorAll('.btn-cat').forEach(b => b.classList.remove('ativo'));
         el.classList.add('ativo');
@@ -127,13 +130,12 @@
 
     async function carregarCategorias() {
         const container = document.getElementById('listaBotoesCat');
-        const snap = await getDocs(query(collection(db, "categorias"), orderBy("criadoEm", "asc")));
+        const snap = await getDocs(collection(db, "categorias"));
         container.innerHTML = `<button class="btn-cat ativo" onclick="selecionarCat('Geral', '#4CAF50', this)">Geral</button>`;
         snap.forEach(d => {
             const c = d.data();
             container.innerHTML += `<button class="btn-cat" style="border-bottom: 3px solid ${c.cor}" onclick="selecionarCat('${c.nome}', '${c.cor}', this)">${c.nome}</button>`;
         });
-        container.innerHTML += `<button onclick="promptNovaCat()" style="border:none; background:none; font-size:1.5em; color:#2196F3; cursor:pointer;">+</button>`;
     }
 
     // TAREFAS
@@ -152,12 +154,12 @@
                 if (catFiltro !== "Geral" && t.categoria !== catFiltro) return;
                 if (filtroDataAtual !== 'semanal' && t.dataString !== dataFiltro) return;
                 
-                const cor = t.corCategoria || "#ccc";
+                const cor = t.corCategoria || "#2196F3";
                 lista.innerHTML += `
                     <div class="tarefa-item" style="border-left-color: ${cor}">
                         <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
                         <small style="color:${cor}; font-weight:bold">${t.categoria || 'Geral'}</small>
-                        <span style="float:right; font-size:0.8em;">⏰ ${t.hora || '--:--'}</span>
+                        <span style="float:right; font-size:0.85em;">⏰ ${t.hora || '--:--'}</span>
                         <p style="margin:8px 0;">${t.descricao}</p>
                         ${t.fotoUrl ? `<img src="${t.fotoUrl}">` : ""}
                     </div>`;
@@ -172,46 +174,30 @@
         const fileInput = document.getElementById('fotoTask');
         if(!desc) return alert("Digite a tarefa!");
 
-        const btn = document.getElementById('btnSalvar');
-        btn.innerText = "Salvando..."; btn.disabled = true;
-
         try {
-            let base64Image = fileInput.files[0] ? await redimensionarFoto(fileInput.files[0]) : "";
+            let base64 = fileInput.files[0] ? await comprimirFoto(fileInput.files[0]) : "";
             await addDoc(collection(db, "tarefas"), {
                 descricao: desc, hora: hora, dataString: data,
                 categoria: document.getElementById('categoriaSelecionada').value,
                 corCategoria: document.getElementById('corSelecionada').value,
-                fotoUrl: base64Image, dataCriacao: new Date()
+                fotoUrl: base64, dataCriacao: new Date()
             });
             document.getElementById('descTask').value = "";
             fileInput.value = "";
             carregarTarefas();
         } catch (e) { alert("Erro ao salvar!"); }
-        btn.innerText = "Salvar Tudo"; btn.disabled = false;
     };
 
-    // FUNÇÕES COMPLEMENTARES
     window.setarData = (tipo, el) => {
         const input = document.getElementById('dataSeletor');
         document.querySelectorAll('.btn-date').forEach(b => b.classList.remove('ativo'));
-        if (tipo === 'hoje') { input.value = new Date().toISOString().split('T')[0]; if(el) el.classList.add('ativo'); filtroDataAtual = 'hoje'; }
-        else if (tipo === 'amanha') { const am = new Date(); am.setDate(am.getDate()+1); input.value = am.toISOString().split('T')[0]; if(el) el.classList.add('ativo'); filtroDataAtual = 'amanha'; }
-        else if (tipo === 'semanal') { if(el) el.classList.add('ativo'); filtroDataAtual = 'semanal'; }
+        if (tipo === 'hoje') { input.value = new Date().toISOString().split('T')[0]; el.classList.add('ativo'); filtroDataAtual = 'hoje'; }
+        else if (tipo === 'amanha') { const am = new Date(); am.setDate(am.getDate()+1); input.value = am.toISOString().split('T')[0]; el.classList.add('ativo'); filtroDataAtual = 'amanha'; }
+        else if (tipo === 'semanal') { el.classList.add('ativo'); filtroDataAtual = 'semanal'; }
         carregarTarefas();
     };
 
-    window.promptNovaCat = async () => {
-        const n = prompt("Nome da Categoria:");
-        if(n) {
-            const h = Math.floor(Math.random()*360);
-            await addDoc(collection(db, "categorias"), { nome: n, cor: `hsl(${h},70%,45%)`, criadoEm: new Date() });
-            carregarCategorias();
-        }
-    };
-
     window.excluirTask = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
-    window.abrirConfig = () => document.getElementById('modalConfig').classList.remove('escondido');
-    window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
 
     // INICIAR
     setarData('hoje', document.getElementById('btnHoje'));
