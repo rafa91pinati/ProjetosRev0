@@ -9,10 +9,10 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
         .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         
-        /* CABEÇALHO REAJUSTADO */
+        /* CABEÇALHO REAJUSTADO - GRID */
         .timeline-header { 
             display: grid; 
-            grid-template-columns: 0.8fr 0.8fr 0.8fr 2fr auto; /* Aumentei o espaço da data (2fr) */
+            grid-template-columns: 0.8fr 0.8fr 0.8fr 2fr auto; 
             gap: 5px; 
             margin-bottom: 15px; 
             align-items: center;
@@ -31,7 +31,7 @@
 
         .btn-config { background: none; border: none; font-size: 1.3em; cursor: pointer; padding: 0 5px; }
 
-        /* CATEGORIAS RESTAURADAS */
+        /* CATEGORIAS */
         .category-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
         .btn-cat { white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd; background: #f9f9f9; cursor: pointer; font-size: 0.85em; }
         .btn-cat.ativo { background: #333; color: white; border-color: #333; }
@@ -44,8 +44,6 @@
         .tarefa-item { background: #fff; margin-bottom: 12px; padding: 15px; border-radius: 12px; border-left: 6px solid #2196F3; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; }
         .btn-excluir { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #aaa; font-size: 1.2em; cursor: pointer; }
         img { max-width: 100%; border-radius: 10px; margin-top: 10px; display: block; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        
-        .escondido { display: none !important; }
     </style>
 </head>
 <body>
@@ -64,7 +62,6 @@
     <input type="hidden" id="corSelecionada" value="#4CAF50">
 
     <div class="secao-card">
-        <h3 style="margin-top:0; font-size: 1em;">📝 Nova Tarefa</h3>
         <input type="text" id="descTask" placeholder="O que vamos fazer?">
         <div style="display: flex; gap: 8px;">
             <input type="time" id="horaTask" style="flex: 1;">
@@ -74,12 +71,28 @@
     </div>
 
     <div id="secaoLista">
-        <h3 style="font-size: 1em;">📋 Atividades</h3>
-        <div id="listaTarefas">Carregando atividades...</div>
+        <div id="listaTarefas">Buscando atividades...</div>
     </div>
 </div>
 
 <script type="module">
+    // --- LÓGICA DE ATUALIZAÇÃO AUTOMÁTICA AO INICIAR ---
+    window.addEventListener('load', () => {
+        // Verifica se o Service Worker tem atualização
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('firebase-messaging-sw.js').then(reg => {
+                reg.onupdatefound = () => {
+                    const installingWorker = reg.installing;
+                    installingWorker.onstatechange = () => {
+                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            window.location.reload(); // Recarrega se houver versão nova no GitHub
+                        }
+                    };
+                };
+            });
+        }
+    });
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -119,15 +132,7 @@
         });
     };
 
-    // CATEGORIAS
-    window.selecionarCat = (nome, cor, el) => {
-        document.querySelectorAll('.btn-cat').forEach(b => b.classList.remove('ativo'));
-        el.classList.add('ativo');
-        document.getElementById('categoriaSelecionada').value = nome;
-        document.getElementById('corSelecionada').value = cor;
-        carregarTarefas();
-    };
-
+    // CATEGORIAS E TAREFAS
     async function carregarCategorias() {
         const container = document.getElementById('listaBotoesCat');
         const snap = await getDocs(collection(db, "categorias"));
@@ -138,13 +143,10 @@
         });
     }
 
-    // TAREFAS
     async function carregarTarefas() {
         const lista = document.getElementById('listaTarefas');
         const dataFiltro = document.getElementById('dataSeletor').value;
         const catFiltro = document.getElementById('categoriaSelecionada').value;
-        lista.innerHTML = "Buscando...";
-
         try {
             const q = query(collection(db, "tarefas"), orderBy("dataCriacao", "desc"));
             const snap = await getDocs(q);
@@ -153,7 +155,6 @@
                 const t = d.data();
                 if (catFiltro !== "Geral" && t.categoria !== catFiltro) return;
                 if (filtroDataAtual !== 'semanal' && t.dataString !== dataFiltro) return;
-                
                 const cor = t.corCategoria || "#2196F3";
                 lista.innerHTML += `
                     <div class="tarefa-item" style="border-left-color: ${cor}">
@@ -184,7 +185,7 @@
             });
             document.getElementById('descTask').value = "";
             fileInput.value = "";
-            carregarTarefas();
+            carregarTarefas(); // Atualiza a lista após salvar
         } catch (e) { alert("Erro ao salvar!"); }
     };
 
@@ -194,6 +195,14 @@
         if (tipo === 'hoje') { input.value = new Date().toISOString().split('T')[0]; el.classList.add('ativo'); filtroDataAtual = 'hoje'; }
         else if (tipo === 'amanha') { const am = new Date(); am.setDate(am.getDate()+1); input.value = am.toISOString().split('T')[0]; el.classList.add('ativo'); filtroDataAtual = 'amanha'; }
         else if (tipo === 'semanal') { el.classList.add('ativo'); filtroDataAtual = 'semanal'; }
+        carregarTarefas();
+    };
+
+    window.selecionarCat = (nome, cor, el) => {
+        document.querySelectorAll('.btn-cat').forEach(b => b.classList.remove('ativo'));
+        el.classList.add('ativo');
+        document.getElementById('categoriaSelecionada').value = nome;
+        document.getElementById('corSelecionada').value = cor;
         carregarTarefas();
     };
 
