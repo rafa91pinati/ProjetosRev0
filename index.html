@@ -9,7 +9,7 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
         .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         
-        /* 1. AJUSTE CABEÇALHO (VERMELHO) - Calendário alinhado e altura igual */
+        /* 1. AJUSTE CABEÇALHO (VERMELHO) - Calendário alinhado */
         .timeline-header { display: flex; gap: 5px; margin-bottom: 15px; align-items: stretch; height: 42px; }
         .btn-date { flex: 1; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.65rem; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center; }
         .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
@@ -27,7 +27,7 @@
         input[type="text"], input[type="time"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         #btnSalvar { background: #4CAF50; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
         
-        /* 2. CARD DE TAREFA (VERDE) - Lixeira e Alarme bem separados */
+        /* 2. CARD DE TAREFA (VERDE) - Lixeira e Alarme separados */
         .tarefa-item { background: #fff; margin-bottom: 12px; padding: 15px; border-radius: 12px; border-left: 6px solid #2196F3; box-shadow: 0 3px 6px rgba(0,0,0,0.08); position: relative; }
         .tarefa-info-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .btn-excluir { background: #fff0f0; border: none; color: #ff4d4d; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
@@ -49,13 +49,17 @@
         <button class="btn-config" onclick="abrirConfig()">⚙️</button>
     </div>
 
-    <div class="header-secao">📝 Nova Tarefa</div> <div class="secao-card">
+    <div class="category-scroll" id="listaBotoesCat"></div>
+
+    <div class="header-secao">📝 Adicionar Tarefa</div>
+    <div class="secao-card">
         <input type="text" id="descTask" placeholder="O que vamos fazer?">
         <input type="time" id="horaTask">
-        <button id="btnSalvar">Salvar na Agenda</button>
+        <button id="btnSalvar">Salvar Tudo</button>
     </div>
 
-    <div class="header-secao">📅 Minhas Atividades</div> <div id="secaoLista">
+    <div class="header-secao">📅 Minhas Atividades</div>
+    <div id="secaoLista">
         <div id="listaTarefas">Sincronizando...</div>
     </div>
 </div>
@@ -88,19 +92,20 @@
     const messaging = getMessaging(app);
     const auth = getAuth(app);
 
-    // FUNÇÃO PARA ATIVAR O ALARME COM A CHAVE CORRETA
+    // SOLUÇÃO DOS ERROS TÉCNICOS
     window.solicitarNotificacao = async () => {
         const permission = await Notification.requestPermission();
         if (permission === "granted") {
             try {
-                await signInAnonymously(auth); 
+                // PRIMEIRO: Garante autenticação para evitar o erro de credenciais
+                await signInAnonymously(auth);
                 
-                // Registra o Service Worker na pasta correta do GitHub
+                // SEGUNDO: Registra o Service Worker no escopo correto do GitHub
                 const reg = await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', { 
                     scope: '/ProjetosRev0/' 
                 });
                 
-                // USANDO A CHAVE PÚBLICA GIGANTE QUE APARECE NO SEU CONSOLE
+                // TERCEIRO: Usa a Chave Pública CORRETA do seu print
                 const token = await getToken(messaging, { 
                     vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
                     serviceWorkerRegistration: reg
@@ -117,13 +122,14 @@
 
     window.abrirConfig = () => document.getElementById('modalConfig').classList.remove('escondido');
     window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
-    
+
+    // Funções de Interface e Dados
     window.setarData = (tipo) => {
         if (tipo === 'hoje') document.getElementById('dataSeletor').value = new Date().toISOString().split('T')[0];
         carregarTarefas();
     };
 
-    async function carregarTarefas() {
+    window.carregarTarefas = async () => {
         const lista = document.getElementById('listaTarefas'), data = document.getElementById('dataSeletor').value;
         if(!data) return;
         const q = query(collection(db, "tarefas"), orderBy("hora", "asc"));
@@ -142,7 +148,7 @@
                     </div>`;
             }
         });
-    }
+    };
 
     window.excluirTask = async (id) => { if(confirm("Remover?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
 
