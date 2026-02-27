@@ -10,13 +10,10 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Esto garantiza que el alarme funcione incluso con la pantalla apagada
 messaging.onBackgroundMessage((payload) => {
-    console.log('Alarma en segundo plano:', payload);
-    const notificationTitle = payload.notification.title;
-    const notificationOptions = {
+    console.log('Notificação recebida:', payload);
+    self.registration.showNotification(payload.notification.title, {
         body: payload.notification.body,
         icon: 'favicon.ico'
-    };
-    self.registration.showNotification(notificationTitle, notificationOptions);
+    });
 });
