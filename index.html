@@ -77,17 +77,23 @@
 
 <script type="module">
     // --- LÓGICA DE ATUALIZAÇÃO AUTOMÁTICA AO INICIAR ---
-    window.addEventListener('load', () => {
-        // Verifica se o Service Worker tem atualização
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('firebase-messaging-sw.js').then(reg => {
-                reg.onupdatefound = () => {
-                    const installingWorker = reg.installing;
-                    installingWorker.onstatechange = () => {
-                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            window.location.reload(); // Recarrega se houver versão nova no GitHub
-                        }
-                    };
+  async function forcarAtualizacao() {
+    if ('serviceWorker' in navigator) {
+        const registros = await navigator.serviceWorker.getRegistrations();
+        for (let reg of registros) {
+            await reg.update(); // Força o Service Worker a buscar no GitHub
+            console.log("Verificando atualizações no servidor...");
+        }
+    }
+}
+
+window.addEventListener('load', () => {
+    forcarAtualizacao();
+    
+    // Se você quiser um botão escondido para atualizar tudo, pode usar este:
+    console.log("Para atualizar manualmente, digite: location.reload(true)");
+});
+
                 };
             });
         }
