@@ -8,32 +8,23 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
         .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        
-        /* Ajuste do Cabeçalho (Vermelho) */
         .timeline-header { display: flex; gap: 5px; margin-bottom: 15px; align-items: stretch; height: 42px; }
         .btn-date { flex: 1; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.65rem; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center; }
         .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
-        #dataSeletor { flex: 2.5; padding: 0 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.8rem; height: 100%; box-sizing: border-box; }
+        #dataSeletor { flex: 2.5; padding: 0 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.85rem; height: 100%; box-sizing: border-box; }
         .btn-config { background: none; border: none; font-size: 1.3em; cursor: pointer; display: flex; align-items: center; padding: 0 5px; }
-
-        /* Títulos de Sessão (Azul) */
         .header-secao { border-left: 5px solid #2196F3; padding-left: 10px; margin: 20px 0 10px; color: #2196F3; font-size: 1rem; font-weight: bold; text-transform: uppercase; }
-
         .category-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
         .btn-cat { white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd; background: #f9f9f9; cursor: pointer; font-size: 0.85em; }
         .btn-cat.ativo { background: #333; color: white; }
-        
         .secao-card { background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
         input[type="text"], input[type="time"], input[type="number"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         #btnSalvar { background: #4CAF50; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
-        
-        /* Ajuste do Card (Verde) */
         .tarefa-item { background: #fff; margin-bottom: 12px; padding: 15px; border-radius: 12px; border-left: 6px solid #2196F3; box-shadow: 0 3px 6px rgba(0,0,0,0.08); position: relative; }
         .tarefa-info-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .btn-excluir { background: #fff0f0; border: none; color: #ff4d4d; cursor: pointer; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .tarefa-desc { margin: 10px 0; font-size: 0.95rem; color: #333; }
-        .tarefa-hora { font-size: 0.85rem; color: #666; font-weight: bold; display: flex; align-items: center; gap: 5px; }
-
+        .tarefa-hora { font-size: 0.85rem; color: #2196F3; font-weight: bold; display: flex; align-items: center; gap: 5px; background: #e3f2fd; padding: 4px 10px; border-radius: 6px; width: fit-content; }
         img { max-width: 100%; border-radius: 10px; margin-top: 10px; display: block; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
         .escondido { display: none !important; }
@@ -41,50 +32,33 @@
     </style>
 </head>
 <body>
-
 <div class="container">
     <div class="timeline-header">
-        <button class="btn-date" id="btnSemanal" onclick="setarData('semanal', this)">Semanal</button>
-        <button class="btn-date" id="btnHoje" onclick="setarData('hoje', this)">Hoje</button>
-        <button class="btn-date" id="btnAmanha" onclick="setarData('amanha', this)">Amanhã</button>
-        <input type="date" id="dataSeletor" onchange="setarData('custom', this)">
+        <button class="btn-date" onclick="setarData('hoje', this)">Hoje</button>
+        <input type="date" id="dataSeletor" onchange="carregarTarefas()">
         <button class="btn-config" onclick="abrirConfig()">⚙️</button>
     </div>
-
-    <div class="category-scroll" id="listaBotoesCat"></div>
-    <input type="hidden" id="categoriaSelecionada" value="Geral">
-    <input type="hidden" id="corSelecionada" value="#4CAF50">
-
     <div class="header-secao">📝 Nova Tarefa</div>
     <div class="secao-card">
         <input type="text" id="descTask" placeholder="O que vamos fazer?">
-        <div style="display: flex; gap: 8px;">
-            <input type="time" id="horaTask" style="flex: 1;">
-            <input type="file" id="fotoTask" accept="image/*" style="flex: 1.5; font-size: 0.7em; align-self: center;">
-        </div>
+        <input type="time" id="horaTask">
         <button id="btnSalvar">Salvar Tudo</button>
     </div>
-
     <div class="header-secao">📅 Minhas Atividades</div>
-    <div id="secaoLista">
-        <div id="listaTarefas">Sincronizando...</div>
-    </div>
+    <div id="listaTarefas">Sincronizando...</div>
 </div>
 
 <div id="modalConfig" class="modal escondido">
     <div class="modal-content">
-        <button onclick="fecharConfig()" style="position: absolute; right: 15px; top: 15px; border:none; background:none; font-size:1.2em; cursor:pointer;">✕</button>
-        <div id="conteudoAlarme">
-            <h4>Alerta Antecipado</h4>
-            <input type="number" id="minutosAlerta" value="15">
-            <button onclick="solicitarNotificacao()" style="width:100%; padding:12px; background:#2196F3; color:white; border:none; border-radius:8px;">Ativar Alarme</button>
-        </div>
+        <button onclick="fecharConfig()" style="position: absolute; right: 15px; top: 15px; border:none; background:none; font-size:1.2em;">✕</button>
+        <h4>Configurações</h4>
+        <button onclick="solicitarNotificacao()" style="width:100%; padding:12px; background:#2196F3; color:white; border:none; border-radius:8px;">Ativar Alarme</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
@@ -106,53 +80,49 @@
         const permission = await Notification.requestPermission();
         if (permission === "granted") {
             try {
-                // PRIMEIRO: Faz o login que resolve o erro
+                // PRIMEIRO: Garante o login anônimo (limpa erro de Authentication)
                 await signInAnonymously(auth);
-                
-                // SEGUNDO: Pega o token forçando o caminho correto para o GitHub
+
+                // SEGUNDO: Registra manualmente o Service Worker na pasta ProjetosRev0 (LIMPA O ERRO 404)
+                const registration = await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', {
+                    scope: '/ProjetosRev0/'
+                });
+
+                // TERCEIRO: Pede o token passando o registro da pasta correta
                 const token = await getToken(messaging, { 
                     vapidKey: 'I_waKJL3y7utz-8A8U3rxj863fQqUKf6MsiROfKbesw',
-                    serviceWorkerRegistration: await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', { scope: '/ProjetosRev0/' })
+                    serviceWorkerRegistration: registration
                 });
                 
                 alert("Alarme ativado com sucesso!");
+                console.log("Token:", token);
             } catch (err) { 
                 console.error(err);
-                alert("Erro técnico. Verifique se o domínio rafa91pinati.github.io está autorizado no Firebase Auth."); 
+                alert("Erro técnico: " + err.message); 
             }
         }
     };
 
-    // Funções de interface permanecem as mesmas
     window.abrirConfig = () => document.getElementById('modalConfig').classList.remove('escondido');
     window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
-    window.setarData = (tipo, el) => {
-        const input = document.getElementById('dataSeletor');
-        if (tipo === 'hoje') input.value = new Date().toISOString().split('T')[0];
+    window.setarData = (tipo) => {
+        if (tipo === 'hoje') document.getElementById('dataSeletor').value = new Date().toISOString().split('T')[0];
         carregarTarefas();
     };
 
     async function carregarTarefas() {
-        const lista = document.getElementById('listaTarefas'), dataFiltro = document.getElementById('dataSeletor').value;
+        const lista = document.getElementById('listaTarefas'), data = document.getElementById('dataSeletor').value;
         const q = query(collection(db, "tarefas"), orderBy("hora", "asc"));
         const snap = await getDocs(q);
         lista.innerHTML = "";
         snap.forEach(d => {
             const t = d.data();
-            if (t.dataString === dataFiltro) {
-                lista.innerHTML += `
-                    <div class="tarefa-item">
-                        <div class="tarefa-info-top">
-                            <span class="tarefa-hora">⏰ ${t.hora}</span>
-                            <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
-                        </div>
-                        <div class="tarefa-desc">${t.descricao}</div>
-                        ${t.fotoUrl ? `<img src="${t.fotoUrl}">` : ""}
-                    </div>`;
+            if (t.dataString === data) {
+                lista.innerHTML += `<div class="tarefa-item"><div class="tarefa-hora">⏰ ${t.hora}</div><div class="tarefa-desc">${t.descricao}</div></div>`;
             }
         });
     }
-    carregarTarefas();
+    window.setarData('hoje');
 </script>
 </body>
 </html>
