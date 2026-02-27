@@ -1,75 +1,117 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+	<link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minha Agenda</title>
+    <title>Minha Agenda Inteligente</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 20px; }
-        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        h2, h3 { text-align: center; color: #333; margin: 10px 0; }
-        input, button { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button:hover { background-color: #45a049; }
-        .tarefa-item { background: #fff; margin: 10px 0; padding: 15px; border-left: 5px solid #4CAF50; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; }
-        .tag { font-size: 0.75em; color: white; padding: 3px 8px; border-radius: 12px; margin-left: 10px; vertical-align: middle; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 15px; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; }
         
-        .secao-header { cursor: pointer; user-select: none; display: flex; justify-content: center; align-items: center; }
-        .seta { display: inline-block; margin-left: 10px; transition: transform 0.3s ease; font-size: 0.8em; color: #888; }
-        .seta-fechada { transform: rotate(-90deg); }
-        .escondido { display: none; }
+        /* Cabeçalho de Datas e Engrenagem */
+        .timeline-header { display: flex; gap: 8px; margin-bottom: 15px; align-items: center; overflow-x: auto; padding-bottom: 5px; }
+        .btn-date { 
+            flex: 0 0 auto; min-width: 70px; padding: 10px; border-radius: 10px; border: 1px solid #ddd;
+            background: #fff; cursor: pointer; font-size: 0.8em; font-weight: bold; transition: 0.3s;
+        }
+        .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
+        #dataSeletor { flex: 1; padding: 8px; border-radius: 10px; border: 1px solid #ddd; min-width: 110px; }
+        .btn-config { background: none; border: none; font-size: 1.5em; cursor: pointer; padding: 0 5px; flex-shrink: 0; }
 
-        .btn-cat { background-color: #f0f0f0; color: #333; border: 2px solid #ddd; padding: 8px 15px; border-radius: 20px; cursor: pointer; width: auto !important; margin: 5px 2px; transition: 0.3s; }
-        .btn-cat.ativo { background-color: #333; color: white; border-color: #333; font-weight: bold; }
+        /* Categorias */
+        .category-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
+        .btn-cat { 
+            white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd;
+            background: #f9f9f9; cursor: pointer; font-size: 0.85em;
+        }
+        .btn-cat.ativo { background: #333; color: white; border-color: #333; }
+
+        /* Estilos Gerais */
+        .secao-card { background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
+        h3 { margin-top: 0; font-size: 1em; color: #555; display: flex; justify-content: space-between; align-items: center; }
+        input[type="text"], input[type="time"], input[type="number"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button#btnSalvar { background: #4CAF50; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
         
+        /* Lista de Tarefas */
+        .tarefa-item { 
+            background: #fff; margin-bottom: 10px; padding: 15px; border-radius: 10px;
+            border-left: 6px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative;
+        }
+        .tarefa-concluida { opacity: 0.5; text-decoration: line-through; }
+        .btn-excluir { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #ff4d4d; font-size: 1.1em; cursor: pointer; }
+        .check-task { width: 20px; height: 20px; margin-right: 10px; vertical-align: middle; }
         img { max-width: 100%; border-radius: 8px; margin-top: 10px; display: block; }
-        .btn-excluir { position: absolute; right: 10px; top: 10px; background: none; color: #ff4d4d; width: auto; padding: 5px; margin: 0; font-size: 1.2em; border:none; cursor:pointer; }
+
+        /* Modal / Pop-up */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; position: relative; }
+        .escondido { display: none !important; }
+        .modal-tabs { display: flex; justify-content: space-around; margin-bottom: 20px; border-bottom: 1px solid #eee; }
+        .tab-btn { background: none; border: none; font-size: 1.5em; cursor: pointer; padding: 10px; opacity: 0.4; }
+        .tab-btn.ativo { opacity: 1; border-bottom: 3px solid #2196F3; }
+        .item-cat-excluir { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="secao-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;" onclick="toggleSecao('formTarefa', 'setaForm')">
-        <h2 style="margin: 0;">📅 Tarefa <span id="setaForm" class="seta">▼</span></h2>
-        <input type="date" id="dataSeletor" onclick="event.stopPropagation()" style="width: auto; padding: 5px; border-radius: 5px; border: 1px solid #ccc; cursor: pointer;">
+    <div class="timeline-header">
+        <button class="btn-date" id="btnSemanal" onclick="setarData('semanal', this)">Semanal</button>
+        <button class="btn-date" id="btnHoje" onclick="setarData('hoje', this)">Hoje</button>
+        <button class="btn-date" id="btnAmanha" onclick="setarData('amanha', this)">Amanhã</button>
+        <input type="date" id="dataSeletor" onchange="setarData('custom', this)">
+        <button class="btn-config" onclick="abrirConfig()">⚙️</button>
     </div>
-    
-    <div id="formTarefa" class="secao-conteudo">
-        <div id="secaoCategorias" style="margin-bottom: 20px; text-align: left;">
-    <div id="listaBotoesCat" style="display: flex; gap: 8px; justify-content: flex-start; flex-wrap: wrap; align-items: center;">
-        </div>
-    
+
+    <div class="category-scroll" id="listaBotoesCat"></div>
     <input type="hidden" id="categoriaSelecionada" value="Geral">
     <input type="hidden" id="corSelecionada" value="#4CAF50">
+
+    <div class="secao-card">
+        <h3>📝 Nova Tarefa <span style="font-size: 0.8em; color: #2196F3;" id="txtDataSelecionada"></span></h3>
+        <div id="formConteudo">
+            <input type="text" id="descTask" placeholder="O que você vai fazer?">
+            <div style="display: flex; gap: 8px;">
+                <input type="time" id="horaTask" style="flex: 1;">
+                <input type="file" id="fotoTask" accept="image/*" style="flex: 1.5; font-size: 0.7em; align-self: center;">
+            </div>
+            <button id="btnSalvar">Salvar na Agenda</button>
+        </div>
+    </div>
+
+    <div id="secaoLista">
+        <h3 style="border-bottom: 1px solid #eee; padding-bottom: 5px;">📋 Atividades</h3>
+        <div id="listaTarefas">Carregando...</div>
+    </div>
 </div>
 
-        <div id="containerAtividades">
-            <div class="par-atividade" style="border-bottom: 1px dashed #ccc; padding: 10px 0; display: flex; align-items: center; gap: 10px; position: relative;">
-                <input type="text" class="desc-input" placeholder="Atividade 1" style="flex: 1;">
-                <input type="file" class="foto-input" accept="image/*" style="width: auto;">
-            </div>
-        </div>
+<div id="modalConfig" class="modal escondido">
+    <div class="modal-content">
+        <button onclick="fecharConfig()" style="position: absolute; right: 15px; top: 15px; border:none; background:none; font-size:1.2em; cursor:pointer;">✕</button>
         
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button id="btnAddCampo" style="background-color: #2196F3; flex: 1; margin: 0;">+ ADD tarefa</button>
-            <button id="btnSalvar" style="background-color: #4CAF50; flex: 1; margin: 0;">Salvar Tudo</button>
+        <div class="modal-tabs">
+            <button class="tab-btn ativo" id="tabAlarme" onclick="abaConfig('alarme')">🔔</button>
+            <button class="tab-btn" id="tabCat" onclick="abaConfig('categorias')">📂</button>
         </div>
-    </div>
 
-    <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
+        <div id="conteudoAlarme">
+            <h4>Tempo do Alarme</h4>
+            <p style="font-size:0.8em; color: #666;">Avisar quantos minutos antes?</p>
+            <input type="number" id="inputMinutosAlarme" value="15">
+            <button onclick="fecharConfig()" style="background:#2196F3;">Definir Tempo</button>
+        </div>
 
-    <div class="secao-header" onclick="toggleSecao('secaoLista', 'setaLista')">
-        <h3>📋 Minhas Tarefas <span id="setaLista" class="seta">▼</span></h3>
-    </div>
-    
-    <div id="secaoLista" class="secao-conteudo">
-        <div id="listaTarefas">Carregando tarefas...</div>
+        <div id="conteudoCategorias" class="escondido">
+            <h4>Excluir Categorias</h4>
+            <div id="listaExcluirCat" style="max-height: 250px; overflow-y: auto;"></div>
+        </div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
@@ -84,151 +126,196 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // --- FUNÇÕES DE CATEGORIA ---
+    let filtroDataAtual = 'hoje';
 
-    function gerarCorAleatoria() {
-        const h = Math.floor(Math.random() * 360);
-        return `hsl(${h}, 70%, 45%)`;
-    }
+    // --- COMPRESSÃO DE IMAGEM ---
+    const redimensionarEConverter = (file) => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    let width = img.width, height = img.height;
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+            };
+        });
+    };
 
-    // Janela de digitação para nova categoria
-    window.promptNovaCategoria = async function() {
-        const nome = prompt("Digite o nome da nova categoria:");
-        if (nome && nome.trim() !== "") {
-            const cor = gerarCorAleatoria();
-            try {
-                await addDoc(collection(db, "categorias"), { 
-                    nome: nome.trim(), 
-                    cor: cor,
-                    criadoEm: new Date() 
-                });
-                carregarCategorias();
-            } catch (e) { console.error("Erro ao salvar categoria:", e); }
+    // --- MODAL CONFIG ---
+    window.abrirConfig = () => {
+        document.getElementById('modalConfig').classList.remove('escondido');
+        abaConfig('alarme');
+    };
+    window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
+
+    window.abaConfig = (tipo) => {
+        const tAlarme = document.getElementById('tabAlarme');
+        const tCat = document.getElementById('tabCat');
+        const cAlarme = document.getElementById('conteudoAlarme');
+        const cCat = document.getElementById('conteudoCategorias');
+
+        if(tipo === 'alarme') {
+            tAlarme.classList.add('ativo'); tCat.classList.remove('ativo');
+            cAlarme.classList.remove('escondido'); cCat.classList.add('escondido');
+        } else {
+            tCat.classList.add('ativo'); tAlarme.classList.remove('ativo');
+            cCat.classList.remove('escondido'); cAlarme.classList.add('escondido');
+            listarCategoriasExclusao();
         }
     };
 
-    window.selecionarCat = (nome, cor, elemento) => {
+    async function listarCategoriasExclusao() {
+        const container = document.getElementById('listaExcluirCat');
+        const snap = await getDocs(query(collection(db, "categorias"), orderBy("criadoEm", "asc")));
+        container.innerHTML = "";
+        snap.forEach(d => {
+            const c = d.data();
+            container.innerHTML += `
+                <div class="item-cat-excluir">
+                    <span>${c.nome}</span>
+                    <button onclick="removerCategoria('${d.id}', '${c.nome}')" style="width:auto; background:#ff4d4d; border-radius:5px; padding:5px 10px;">Excluir</button>
+                </div>`;
+        });
+    }
+
+    window.removerCategoria = async (id, nome) => {
+        if(confirm(`Excluir "${nome}"? As tarefas voltarão para "Geral".`)) {
+            await deleteDoc(doc(db, "categorias", id));
+            const q = query(collection(db, "tarefas"), where("categoria", "==", nome));
+            const snap = await getDocs(q);
+            const batch = snap.docs.map(t => updateDoc(doc(db, "tarefas", t.id), { categoria: "Geral", corCategoria: "#4CAF50" }));
+            await Promise.all(batch);
+            alert("Categoria removida!");
+            location.reload();
+        }
+    };
+
+    // --- DATAS E FILTROS ---
+    window.setarData = (tipo, el) => {
+        const hoje = new Date();
+        const input = document.getElementById('dataSeletor');
+        document.querySelectorAll('.btn-date').forEach(b => b.classList.remove('ativo'));
+        
+        if (tipo === 'hoje') {
+            input.value = hoje.toISOString().split('T')[0];
+            el.classList.add('ativo'); filtroDataAtual = 'hoje';
+        } else if (tipo === 'amanha') {
+            const am = new Date(hoje); am.setDate(hoje.getDate() + 1);
+            input.value = am.toISOString().split('T')[0];
+            el.classList.add('ativo'); filtroDataAtual = 'amanha';
+        } else if (tipo === 'semanal') {
+            el.classList.add('ativo'); filtroDataAtual = 'semanal';
+        } else { filtroDataAtual = 'custom'; }
+        
+        atualizarLabelData(); carregarTarefas();
+    };
+
+    function atualizarLabelData() {
+        const val = document.getElementById('dataSeletor').value;
+        if(val) {
+            const d = val.split('-');
+            document.getElementById('txtDataSelecionada').innerText = `(${d[2]}/${d[1]})`;
+        }
+    }
+
+    window.selecionarCat = (nome, cor, el) => {
         document.querySelectorAll('.btn-cat').forEach(b => b.classList.remove('ativo'));
-        elemento.classList.add('ativo');
+        el.classList.add('ativo');
         document.getElementById('categoriaSelecionada').value = nome;
         document.getElementById('corSelecionada').value = cor;
+        carregarTarefas();
     };
 
     async function carregarCategorias() {
         const container = document.getElementById('listaBotoesCat');
-        if (!container) return;
-        try {
-            const q = query(collection(db, "categorias"), orderBy("criadoEm", "asc"));
-            const snap = await getDocs(q);
-            
-            // Botão Padrão + Categorias do Banco + Botão azul "+"
-            container.innerHTML = `<button type="button" class="btn-cat ativo" style="border-bottom: 4px solid #4CAF50" onclick="selecionarCat('Geral', '#4CAF50', this)">Geral</button>`;
-            
-            snap.forEach(d => {
-                const cat = d.data();
-                container.innerHTML += `<button type="button" class="btn-cat" style="border-bottom: 4px solid ${cat.cor}" onclick="selecionarCat('${cat.nome}', '${cat.cor}', this)">${cat.nome}</button>`;
-            });
-
-            // Adiciona o "+" redondo ao final
-            container.innerHTML += `
-                <button type="button" onclick="promptNovaCategoria()" style="width: 32px; height: 32px; border-radius: 50%; background-color: #2196F3; color: white; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 5px; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                    +
-                </button>`;
-        } catch (e) { console.error(e); }
+        const snap = await getDocs(query(collection(db, "categorias"), orderBy("criadoEm", "asc")));
+        container.innerHTML = `<button class="btn-cat ativo" onclick="selecionarCat('Geral', '#4CAF50', this)">Geral</button>`;
+        snap.forEach(d => {
+            const c = d.data();
+            container.innerHTML += `<button class="btn-cat" style="border-bottom: 3px solid ${c.cor}" onclick="selecionarCat('${c.nome}', '${c.cor}', this)">${c.nome}</button>`;
+        });
+        container.innerHTML += `<button onclick="promptNovaCat()" style="border:none; background:none; font-size:1.5em; cursor:pointer; color:#2196F3; margin-left:5px;">+</button>`;
     }
 
-    // --- FUNÇÕES GERAIS ---
-
-    window.toggleSecao = (idC, idS) => {
-        document.getElementById(idC).classList.toggle('escondido');
-        document.getElementById(idS).classList.toggle('seta-fechada');
-    };
-
-    window.excluirTarefa = async (id) => {
-        if (confirm("Deseja excluir esta tarefa?")) {
-            await deleteDoc(doc(db, "tarefas", id));
-            carregarTarefas();
-        }
-    };
-
-    const converterParaBase64 = (arquivo) => {
-        return new Promise((resolve, reject) => {
-            const leitor = new FileReader();
-            leitor.readAsDataURL(arquivo);
-            leitor.onload = () => resolve(leitor.result);
-            leitor.onerror = (e) => reject(e);
-        });
-    };
-
+    // --- TAREFAS ---
     async function carregarTarefas() {
         const lista = document.getElementById('listaTarefas');
+        const dataFiltro = document.getElementById('dataSeletor').value;
+        const catFiltro = document.getElementById('categoriaSelecionada').value;
+
         try {
-            const q = query(collection(db, "tarefas"));
+            let q = query(collection(db, "tarefas"), orderBy("dataCriacao", "desc"));
             const snap = await getDocs(q);
             lista.innerHTML = "";
-            if (snap.empty) { lista.innerHTML = "<p>Nenhuma tarefa encontrada.</p>"; return; }
             snap.forEach(d => {
                 const t = d.data();
-                const corCard = t.corCategoria || "#ccc"; 
+                if (catFiltro !== "Geral" && t.categoria !== catFiltro) return;
+                if (filtroDataAtual !== 'semanal' && t.dataString !== dataFiltro) return;
+
+                const cor = t.corCategoria || "#ccc";
                 lista.innerHTML += `
-                    <div class="tarefa-item" style="border-left: 5px solid ${corCard}; background-color: ${corCard}15;">
-                        <button class="btn-excluir" onclick="excluirTarefa('${d.id}')">🗑️</button>
-                        <strong>${t.dia || '??'} de ${t.mes || '??'}</strong> 
-                        <span class="tag" style="background-color: ${corCard}">${t.categoria}</span>
-                        <p style="margin-top: 10px;">${t.descricao}</p>
+                    <div class="tarefa-item ${t.concluida ? 'tarefa-concluida' : ''}" style="border-left-color: ${cor}">
+                        <input type="checkbox" class="check-task" ${t.concluida ? 'checked' : ''} onclick="toggleCheck('${d.id}', ${t.concluida})">
+                        <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <small style="color:${cor}; font-weight:bold">${t.categoria}</small>
+                            ${t.hora ? `<span style="font-size:0.8em; color:#666;">⏰ ${t.hora}</span>` : ''}
+                        </div>
+                        <p style="margin: 8px 0;">${t.descricao}</p>
                         ${t.fotoUrl ? `<img src="${t.fotoUrl}">` : ""}
                     </div>`;
             });
         } catch (e) { console.error(e); }
     }
 
-    // --- EVENTOS ---
-
-    document.getElementById('btnAddCampo').addEventListener('click', () => {
-        const div = document.createElement('div');
-        div.className = 'par-atividade';
-        div.style = "border-bottom: 1px dashed #ccc; padding: 10px 0; display: flex; align-items: center; gap: 10px; position: relative;";
-        div.innerHTML = `<input type="text" class="desc-input" placeholder="Nova atividade" style="flex: 1;"><input type="file" class="foto-input" accept="image/*" style="width: auto;"><span onclick="this.parentElement.remove()" style="cursor:pointer; color:red; font-weight:bold; padding: 5px;">✖</span>`;
-        document.getElementById('containerAtividades').appendChild(div);
-    });
-
     document.getElementById('btnSalvar').addEventListener('click', async () => {
+        const desc = document.getElementById('descTask').value;
+        const hora = document.getElementById('horaTask').value;
+        const dataFull = document.getElementById('dataSeletor').value;
+        const fileInput = document.getElementById('fotoTask');
+        if (!desc) return alert("Escreva a tarefa!");
+
         const btn = document.getElementById('btnSalvar');
-        const dataVal = document.getElementById('dataSeletor').value;
-        if (!dataVal) return alert("Selecione a data!");
-        
-        const partes = dataVal.split('-');
-        const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-        const dia = partes[2];
-        const mes = meses[parseInt(partes[1]) - 1];
-        
         btn.disabled = true; btn.innerText = "Salvando...";
-        const descs = document.querySelectorAll('.desc-input');
-        const fotos = document.querySelectorAll('.foto-input');
 
         try {
-            for (let i = 0; i < descs.length; i++) {
-                if (descs[i].value) {
-                    let img = "";
-                    if (fotos[i].files[0]) img = await converterParaBase64(fotos[i].files[0]);
-                    const catFinal = document.getElementById('categoriaSelecionada').value;
-                    const corFinal = document.getElementById('corSelecionada').value;
-                    await addDoc(collection(db, "tarefas"), {
-                        dia, mes, categoria: catFinal, corCategoria: corFinal,
-                        descricao: descs[i].value, fotoUrl: img, dataCriacao: new Date()
-                    });
-                }
-            }
-            alert("Salvo com sucesso!");
-            location.reload();
-        } catch (e) { alert("Erro ao salvar."); btn.disabled = false; }
+            let base64Image = fileInput.files[0] ? await redimensionarEConverter(fileInput.files[0]) : "";
+            await addDoc(collection(db, "tarefas"), {
+                descricao: desc, hora: hora, dataString: dataFull,
+                categoria: document.getElementById('categoriaSelecionada').value,
+                corCategoria: document.getElementById('corSelecionada').value,
+                fotoUrl: base64Image, concluida: false, dataCriacao: new Date()
+            });
+            document.getElementById('descTask').value = "";
+            document.getElementById('horaTask').value = "";
+            fileInput.value = "";
+            btn.disabled = false; btn.innerText = "Salvar na Agenda";
+            carregarTarefas();
+        } catch (e) { alert("Erro ao salvar!"); btn.disabled = false; }
     });
 
-    // Início
-    const hoje = new Date();
-    document.getElementById('dataSeletor').value = hoje.toISOString().split('T')[0];
+    window.toggleCheck = async (id, status) => { await updateDoc(doc(db, "tarefas", id), { concluida: !status }); carregarTarefas(); };
+    window.excluirTask = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
+    window.promptNovaCat = async () => { 
+        const n = prompt("Nome da Categoria:"); 
+        if(n) { 
+            const h = Math.floor(Math.random()*360); 
+            await addDoc(collection(db, "categorias"), { nome: n, cor: `hsl(${h},70%,45%)`, criadoEm: new Date() }); 
+            carregarCategorias(); 
+        } 
+    };
+
+    setarData('hoje', document.getElementById('btnHoje'));
     carregarCategorias();
-    carregarTarefas();
 </script>
 </body>
 </html>
