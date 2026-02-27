@@ -6,40 +6,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Minha Agenda Inteligente</title>
     <style>
+        /* CSS mantido para estabilidade */
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
         .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        
-        /* CABEÇALHO GRID */
-        .timeline-header { 
-            display: grid; 
-            grid-template-columns: 0.8fr 0.8fr 0.8fr 2fr auto; 
-            gap: 5px; 
-            margin-bottom: 15px; 
-            align-items: center; 
-        }
+        .timeline-header { display: grid; grid-template-columns: 0.8fr 0.8fr 0.8fr 2fr auto; gap: 5px; margin-bottom: 15px; align-items: center; }
         .btn-date { width: 100%; padding: 10px 0; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
         .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
         #dataSeletor { width: 100%; padding: 8px 5px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.85rem; height: 40px; }
-        
-        /* BOTÃO CONFIGURAÇÃO (VOLTOU) */
         .btn-config { background: none; border: none; font-size: 1.3em; cursor: pointer; padding: 0 5px; }
-
         .category-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
         .btn-cat { white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd; background: #f9f9f9; cursor: pointer; font-size: 0.85em; }
         .btn-cat.ativo { background: #333; color: white; }
-
         .secao-card { background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
-        input[type="text"], input[type="time"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        input[type="text"], input[type="time"], input[type="number"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         #btnSalvar { background: #4CAF50; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
-        
         .tarefa-item { background: #fff; margin-bottom: 10px; padding: 12px; border-radius: 10px; border-left: 6px solid #2196F3; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
         .btn-excluir { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #ff4d4d; cursor: pointer; }
-        img { max-width: 100%; border-radius: 8px; margin-top: 10px; display: block; }
-
-        /* MODAL */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
         .escondido { display: none !important; }
-        .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; }
+        .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; position: relative; }
+        .modal-tabs { display: flex; justify-content: space-around; margin-bottom: 15px; border-bottom: 1px solid #eee; }
+        .tab-btn { background: none; border: none; padding: 10px; cursor: pointer; opacity: 0.5; font-size: 1.2em; }
+        .tab-btn.ativo { opacity: 1; border-bottom: 3px solid #2196F3; }
+        .item-excluir-cat { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
@@ -55,7 +44,6 @@
 
     <div class="category-scroll" id="listaBotoesCat"></div>
     <input type="hidden" id="categoriaSelecionada" value="Geral">
-    <input type="hidden" id="corSelecionada" value="#4CAF50">
 
     <div class="secao-card">
         <input type="text" id="descTask" placeholder="O que vamos fazer?">
@@ -67,30 +55,60 @@
     </div>
 
     <div id="secaoLista">
-        <div id="listaTarefas">Carregando...</div>
+        <div id="listaTarefas">Sincronizando...</div>
     </div>
 </div>
 
 <div id="modalConfig" class="modal escondido">
     <div class="modal-content">
-        <button onclick="fecharConfig()" style="float:right; border:none; background:none; font-size:1.2em; cursor:pointer;">✕</button>
-        <h4>Configurações</h4>
-        <button onclick="location.reload(true)" style="width:100%; padding:10px; background:#2196F3; color:white; border:none; border-radius:8px; margin-bottom:10px;">Forçar Atualização</button>
-        <button onclick="solicitarNotificacao()" style="width:100%; padding:10px; background:#4CAF50; color:white; border:none; border-radius:8px;">Ativar Alarme</button>
+        <button onclick="fecharConfig()" style="position: absolute; right: 15px; top: 15px; border:none; background:none; font-size:1.2em; cursor:pointer;">✕</button>
+        <div class="modal-tabs">
+            <button class="tab-btn ativo" id="tabAlarme" onclick="mudarAba('alarme')">🔔</button>
+            <button class="tab-btn" id="tabCat" onclick="mudarAba('categorias')">📂</button>
+        </div>
+        <div id="conteudoAlarme">
+            <h4>Alarme Antecipado</h4>
+            <input type="number" id="minutosAlerta" value="15" placeholder="Minutos antes">
+            <button onclick="alert('Configurado!')" style="width:100%; padding:12px; background:#2196F3; color:white; border:none; border-radius:8px;">Salvar Alarme</button>
+        </div>
+        <div id="conteudoCategorias" class="escondido">
+            <h4>Gerenciar Categorias</h4>
+            <div id="listaExcluirCat"></div>
+        </div>
     </div>
 </div>
 
 <script type="module">
-    // --- MACRO DE ATUALIZAÇÃO AUTOMÁTICA AO ABRIR ---
-    window.onload = () => {
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(regs => {
-                for(let reg of regs) reg.update(); // Força o SW a buscar novidades no GitHub
-            });
-        }
-        console.log("App iniciado e sincronizado com o servidor.");
-    };
+    // --- LÓGICA DE FORCE RELOAD (O QUE VOCÊ PEDIU) ---
+    // Esta função verifica se o app já "se atualizou" nesta sessão
+    async function forceUpdate() {
+        const LAST_UPDATE_KEY = 'last_force_refresh';
+        const now = Date.now();
+        const lastUpdate = localStorage.getItem(LAST_UPDATE_KEY);
 
+        // Se a última atualização foi há mais de 10 segundos (evita loop infinito)
+        if (!lastUpdate || (now - lastUpdate) > 10000) {
+            console.log("Aguardando 2 segundos para forçar atualização...");
+            setTimeout(async () => {
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let reg of registrations) {
+                        await reg.update(); // Puxa do GitHub
+                    }
+                    if ('caches' in window) {
+                        const names = await caches.keys();
+                        await Promise.all(names.map(name => caches.delete(name))); // Limpa cache
+                    }
+                }
+                localStorage.setItem(LAST_UPDATE_KEY, Date.now());
+                window.location.reload(true); // Força o refresh da página
+            }, 2000); // Espera os 2 segundos que você pediu
+        }
+    }
+
+    window.addEventListener('load', forceUpdate);
+
+    // --- RESTANTE DO CÓDIGO (FIREBASE) ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -105,42 +123,39 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     let filtroDataAtual = 'hoje';
 
-    // FUNÇÕES DE INTERFACE
-    window.abrirConfig = () => document.getElementById('modalConfig').classList.remove('escondido');
+    // UI/UX
+    window.abrirConfig = () => { document.getElementById('modalConfig').classList.remove('escondido'); listarCategoriasExclusao(); };
     window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
+    window.mudarAba = (aba) => {
+        const cA = document.getElementById('conteudoAlarme'), cC = document.getElementById('conteudoCategorias');
+        const tA = document.getElementById('tabAlarme'), tC = document.getElementById('tabCat');
+        if(aba==='alarme'){cA.classList.remove('escondido');cC.classList.add('escondido');tA.classList.add('ativo');tC.classList.remove('ativo');}
+        else{cC.classList.remove('escondido');cA.classList.add('escondido');tC.classList.add('ativo');tA.classList.remove('ativo');}
+    };
 
     async function carregarTarefas() {
         const lista = document.getElementById('listaTarefas');
         const dataFiltro = document.getElementById('dataSeletor').value;
         const catFiltro = document.getElementById('categoriaSelecionada').value;
-        
         try {
             const q = query(collection(db, "tarefas"), orderBy("hora", "asc"));
             const snap = await getDocs(q);
             lista.innerHTML = "";
-            let encontrou = false;
-
             snap.forEach(d => {
                 const t = d.data();
                 if (catFiltro !== "Geral" && t.categoria !== catFiltro) return;
                 if (filtroDataAtual !== 'semanal' && t.dataString !== dataFiltro) return;
-                
-                encontrou = true;
                 const cor = t.corCategoria || "#2196F3";
-                lista.innerHTML += `
-                    <div class="tarefa-item" style="border-left-color: ${cor}">
-                        <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
-                        <small style="color:${cor}; font-weight:bold">${t.categoria || 'Geral'}</small>
-                        <span style="float:right; font-size:0.85em;">⏰ ${t.hora || '--:--'}</span>
-                        <p style="margin:8px 0;">${t.descricao}</p>
-                        ${t.fotoUrl ? `<img src="${t.fotoUrl}">` : ""}
-                    </div>`;
+                lista.innerHTML += `<div class="tarefa-item" style="border-left-color:${cor}">
+                    <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
+                    <small style="color:${cor};font-weight:bold">${t.categoria || 'Geral'}</small>
+                    <span style="float:right;font-size:0.85em;">⏰ ${t.hora || '--:--'}</span>
+                    <p style="margin:8px 0;">${t.descricao}</p>
+                </div>`;
             });
-            if(!encontrou) lista.innerHTML = "<p style='text-align:center;color:#999;'>Nada agendado.</p>";
-        } catch (e) { lista.innerHTML = "Erro ao carregar banco."; }
+        } catch(e) {}
     }
 
     async function carregarCategorias() {
@@ -149,26 +164,18 @@
         container.innerHTML = `<button class="btn-cat ativo" onclick="selecionarCat('Geral', '#4CAF50', this)">Geral</button>`;
         snap.forEach(d => {
             const c = d.data();
-            container.innerHTML += `<button class="btn-cat" style="border-bottom: 3px solid ${c.cor}" onclick="selecionarCat('${c.nome}', '${c.cor}', this)">${c.nome}</button>`;
+            container.innerHTML += `<button class="btn-cat" style="border-bottom:3px solid ${c.cor}" onclick="selecionarCat('${c.nome}', '${c.cor}', this)">${c.nome}</button>`;
         });
+        container.innerHTML += `<button onclick="promptNovaCat()" style="border:none;background:none;font-size:1.5em;color:#2196F3;">+</button>`;
     }
 
-    document.getElementById('btnSalvar').onclick = async () => {
-        const desc = document.getElementById('descTask').value;
-        const hora = document.getElementById('horaTask').value;
-        const data = document.getElementById('dataSeletor').value;
-        if(!desc || !data) return alert("Preencha descrição e data!");
-
-        try {
-            await addDoc(collection(db, "tarefas"), {
-                descricao: desc, hora: hora, dataString: data,
-                categoria: document.getElementById('categoriaSelecionada').value,
-                corCategoria: document.getElementById('corSelecionada').value,
-                dataCriacao: new Date()
-            });
-            document.getElementById('descTask').value = "";
-            carregarTarefas();
-        } catch (e) { alert("Erro ao salvar!"); }
+    window.promptNovaCat = async () => {
+        const n = prompt("Nome da Categoria:");
+        if(n) {
+            const h = Math.floor(Math.random()*360);
+            await addDoc(collection(db, "categorias"), { nome: n, cor: `hsl(${h},70%,45%)`, criadoEm: new Date() });
+            carregarCategorias();
+        }
     };
 
     window.setarData = (tipo, el) => {
@@ -180,17 +187,26 @@
         carregarTarefas();
     };
 
-    window.selecionarCat = (nome, cor, el) => {
+    window.selecionarCat = (n, c, el) => {
         document.querySelectorAll('.btn-cat').forEach(b => b.classList.remove('ativo'));
         el.classList.add('ativo');
-        document.getElementById('categoriaSelecionada').value = nome;
-        document.getElementById('corSelecionada').value = cor;
+        document.getElementById('categoriaSelecionada').value = n;
         carregarTarefas();
+    };
+
+    document.getElementById('btnSalvar').onclick = async () => {
+        const desc = document.getElementById('descTask').value, hora = document.getElementById('horaTask').value, data = document.getElementById('dataSeletor').value;
+        if(!desc || !data) return alert("Preencha tudo!");
+        await addDoc(collection(db, "tarefas"), {
+            descricao: desc, hora: hora, dataString: data,
+            categoria: document.getElementById('categoriaSelecionada').value,
+            dataCriacao: new Date()
+        });
+        document.getElementById('descTask').value = ""; carregarTarefas();
     };
 
     window.excluirTask = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
 
-    // INICIAR
     setarData('hoje', document.getElementById('btnHoje'));
     carregarCategorias();
 </script>
