@@ -9,7 +9,7 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
         .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         
-        /* 1. AJUSTE CABEÇALHO (VERMELHO) - Alinhamento e altura igual */
+        /* 1. AJUSTE CABEÇALHO (VERMELHO) - Calendário alinhado e altura igual */
         .timeline-header { display: flex; gap: 5px; margin-bottom: 15px; align-items: stretch; height: 42px; }
         .btn-date { flex: 1; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.65rem; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center; }
         .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
@@ -52,7 +52,7 @@
     <div class="header-secao">📝 Nova Tarefa</div> <div class="secao-card">
         <input type="text" id="descTask" placeholder="O que vamos fazer?">
         <input type="time" id="horaTask">
-        <button id="btnSalvar">Salvar Tudo</button>
+        <button id="btnSalvar">Salvar na Agenda</button>
     </div>
 
     <div class="header-secao">📅 Minhas Atividades</div> <div id="secaoLista">
@@ -93,12 +93,14 @@
         const permission = await Notification.requestPermission();
         if (permission === "granted") {
             try {
-                await signInAnonymously(auth); // Resolve erro de domínio autorizado
+                await signInAnonymously(auth); 
                 
                 // Registra o Service Worker na pasta correta do GitHub
-                const reg = await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', { scope: '/ProjetosRev0/' });
+                const reg = await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', { 
+                    scope: '/ProjetosRev0/' 
+                });
                 
-                // USANDO A CHAVE PÚBLICA GIGANTE DA FOTO
+                // USANDO A CHAVE PÚBLICA GIGANTE QUE APARECE NO SEU CONSOLE
                 const token = await getToken(messaging, { 
                     vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
                     serviceWorkerRegistration: reg
@@ -123,6 +125,7 @@
 
     async function carregarTarefas() {
         const lista = document.getElementById('listaTarefas'), data = document.getElementById('dataSeletor').value;
+        if(!data) return;
         const q = query(collection(db, "tarefas"), orderBy("hora", "asc"));
         const snap = await getDocs(q);
         lista.innerHTML = "";
