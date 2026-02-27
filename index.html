@@ -14,61 +14,67 @@
         ATIVAR AGORA
     </button>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
-            authDomain: "agenda-4efa7.firebaseapp.com",
-            projectId: "agenda-4efa7",
-            storageBucket: "agenda-4efa7.appspot.com",
-            messagingSenderId: "299659202964",
-            appId: "1:299659202964:web:e358210feb4d7784f63f81"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
+        authDomain: "agenda-4efa7.firebaseapp.com",
+        projectId: "agenda-4efa7",
+        storageBucket: "agenda-4efa7.appspot.com",
+        messagingSenderId: "299659202964",
+        appId: "1:299659202964:web:e358210feb4d7784f63f81"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const messaging = getMessaging(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const messaging = getMessaging(app);
 
-        document.getElementById('btnConectar').onclick = async () => {
-            const btn = document.getElementById('btnConectar');
-            const statusTxt = document.getElementById('status');
+    const btn = document.getElementById('btnConectar');
+    const statusTxt = document.getElementById('status');
+
+    btn.onclick = async () => {
+        try {
+            btn.innerText = "VALIDANDO GOOGLE...";
+            btn.disabled = true;
+
+            // 1. LOGIN FORÇADO E ESPERA (Resolve a credencial ausente)
+            const userCredential = await signInAnonymously(auth);
+            console.log("Login OK:", userCredential.user.uid);
             
-            try {
-                btn.innerText = "SINCRONIZANDO...";
-                btn.disabled = true;
+            // Pequena pausa de 1 segundo para o Google "espalhar" sua identidade no sistema
+            await new Promise(r => setTimeout(r, 1000));
 
-                // 1. LOGIN IMEDIATO (Garante a credencial para o Token)
-                await signInAnonymously(auth);
+            // 2. REGISTRO DO ALARME NA PASTA CORRETA
+            const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js', { scope: '/ProjetosRev0/' });
+            
+            // 3. AGUARDA O ALARME FICAR ATIVO (Resolve 'no active service worker')
+            const registration = await navigator.serviceWorker.ready;
 
-                // 2. REGISTRO E ESPERA DE ATIVAÇÃO
-                const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js', { scope: '/ProjetosRev0/' });
-                await navigator.serviceWorker.ready; // Espera o alarme "estacionar"
+            // 4. GERA O TOKEN COM A CHAVE REAL DO PRINT
+            const token = await getToken(messaging, { 
+                vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
+                serviceWorkerRegistration: registration
+            });
 
-                // 3. GERAÇÃO DO TOKEN (Chave VAPID da sua foto)
-                const token = await getToken(messaging, { 
-                    vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
-                    serviceWorkerRegistration: registration
-                });
-
-                if (token) {
-                    statusTxt.innerText = "CONECTADO COM SUCESSO!";
-                    btn.style.background = "#4CAF50";
-                    btn.innerText = "CONEXÃO ATIVA";
-                    alert("SUCESSO! Ponte estabelecida.");
-                    console.log("Token:", token);
-                }
-
-            } catch (err) {
-                console.error(err);
-                statusTxt.innerText = "FALHA TÉCNICA";
-                alert("Erro: " + err.message);
-                btn.disabled = false;
-                btn.innerText = "TENTAR NOVAMENTE";
+            if (token) {
+                statusTxt.innerText = "CONECTADO COM SUCESSO!";
+                btn.style.background = "#4CAF50";
+                btn.innerText = "CONEXÃO ATIVA";
+                alert("SUCESSO TOTAL! A ponte foi construída.");
+                console.log("Token Gerado:", token);
             }
-        };
-    </script>
+
+        } catch (err) {
+            console.error(err);
+            statusTxt.innerText = "FALHA TÉCNICA";
+            alert("Erro: " + err.message);
+            btn.disabled = false;
+            btn.innerText = "TENTAR NOVAMENTE";
+        }
+    };
+</script>
 </body>
 </html>
