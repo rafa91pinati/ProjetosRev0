@@ -99,12 +99,12 @@
 
     let filtroDataAtual = 'hoje';
 
+    // FUNÇÕES DE INTERFACE (MODAL)
     window.abrirConfig = () => {
         document.getElementById('modalConfig').classList.remove('escondido');
         listarCategoriasExclusao();
     };
     window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
-    
     window.mudarAba = (aba) => {
         const cA = document.getElementById('conteudoAlarme'), cC = document.getElementById('conteudoCategorias');
         const tA = document.getElementById('tabAlarme'), tC = document.getElementById('tabCat');
@@ -112,46 +112,32 @@
         else{cC.classList.remove('escondido');cA.classList.add('escondido');tC.classList.add('ativo');tA.classList.remove('ativo');}
     };
 
-window.solicitarNotificacao = async () => {
-    // 1. Pedir permissão primeiro
-    const permission = await Notification.requestPermission();
-    
-    if (permission === "granted") {
-        try {
-            // Mostra no console que iniciou o processo
-            console.log("Iniciando autenticação para obter token...");
+    // ALARME E AUTENTICAÇÃO
+    window.solicitarNotificacao = async () => {
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+            try {
+                // Força o login anônimo antes de pedir o token para validar o domínio
+                await signInAnonymously(auth);
+                
+                const token = await getToken(messaging, { 
+                    vapidKey: 'BKj4JLMSHmF3LHBQNU-NKVdlIaLBnhOow5qF5BqbTDssWgEM5R-g9v7hujX8iUC_bmEq5SligyEA53wo_cx8HUE' 
+                });
 
-            // 2. Garante que o usuário está logado antes de prosseguir
-            // O signInAnonymously retorna uma promessa que precisamos aguardar
-            const userCredential = await signInAnonymously(auth);
-            console.log("Usuário autenticado com ID:", userCredential.user.uid);
-
-            // 3. Pequena pausa de 500ms para o Firebase propagar a autenticação
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            // 4. Busca o token usando a chave VAPID correta do seu print
-            const token = await getToken(messaging, { 
-                vapidKey: 'BKj4JLMSHmF3LHBQNU-NKVdlIaLBnhOow5qF5BqbTDssWgEM5R-g9v7hujX8iUC_bmEq5SligyEA53wo_cx8HUE' 
-            });
-
-            if (token) {
-                alert("Alarme ativado com sucesso!");
-                console.log("Token gerado:", token);
-            } else {
-                throw new Error("Token não gerado pelo navegador.");
+                if (token) {
+                    alert("Alarme ativado com sucesso!");
+                    console.log("Token:", token);
+                }
+            } catch (err) { 
+                console.error(err);
+                alert("Falha técnica ao sincronizar. Tente clicar novamente em 5 segundos."); 
             }
-
-        } catch (err) { 
-            console.error("Erro técnico detalhado:", err);
-            // Se cair aqui, o erro 'auth/operation-not-allowed' pode significar
-            // que o Firebase ainda não propagou a ativação do login anônimo.
-            alert("Falha técnica ao sincronizar. Tente clicar novamente em 5 segundos."); 
+        } else {
+            alert("As notificações estão bloqueadas no seu navegador.");
         }
-    } else {
-        alert("As notificações estão bloqueadas no seu navegador.");
-    }
-};
+    };
 
+    // FUNÇÕES DE DATA E CATEGORIA
     window.setarData = (tipo, el) => {
         const input = document.getElementById('dataSeletor');
         document.querySelectorAll('.btn-date').forEach(b => b.classList.remove('ativo'));
@@ -169,63 +155,7 @@ window.solicitarNotificacao = async () => {
         carregarTarefas();
     };
 
-    window.excluirTask = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
-
-    window.removerCategoria = async (id) => {
-        if(confirm("Excluir categoria?")) { await deleteDoc(doc(db, "categorias", id)); listarCategoriasExclusao(); carregarCategorias(); }
-    };
-
-    window.promptNovaCat = async () => {
-        const n = prompt("Nova Categoria:");
-        if(n) {
-            const h = Math.floor(Math.random()*360);
-            await addDoc(collection(db, "categorias"), { nome: n, cor: `hsl(${h},70%,45%)`, criadoEm: new Date() });
-            carregarCategorias();
-        }
-    };
-
-    const comprimirFoto = (file) => {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const larguraMax = 600;
-                    const proporcao = larguraMax / img.width;
-                    canvas.width = larguraMax;
-                    canvas.height = img.height * proporcao;
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.6));
-                };
-            };
-        });
-    };
-
-// --- INICIALIZAÇÃO CORRIGIDA PARA GITHUB PAGES ---
-async function init() {
-    // 1. Registro manual do Service Worker no caminho correto
-    if ('serviceWorker' in navigator) {
-        try {
-            // Ajustamos o caminho para incluir a subpasta do seu GitHub
-            const registration = await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', {
-                scope: '/ProjetosRev0/'
-            });
-            console.log('Service Worker registrado com sucesso no escopo:', registration.scope);
-        } catch (err) {
-            console.error('Falha ao registrar Service Worker:', err);
-        }
-    }
-
-    await checkUpdate();
-    setarData('hoje', document.getElementById('btnHoje'));
-    carregarCategorias();
-}
-
-init();
+    // GERENCIAMENTO DE DADOS
     async function carregarTarefas() {
         const lista = document.getElementById('listaTarefas'), dataFiltro = document.getElementById('dataSeletor').value, catFiltro = document.getElementById('categoriaSelecionada').value;
         try {
@@ -236,7 +166,6 @@ init();
                 const t = d.data();
                 if (catFiltro !== "Geral" && t.categoria !== catFiltro) return;
                 if (filtroDataAtual !== 'semanal' && t.dataString !== dataFiltro) return;
-                
                 lista.innerHTML += `
                     <div class="tarefa-item" style="border-left: 6px solid ${t.corCategoria || '#2196F3'}">
                         <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
@@ -260,6 +189,12 @@ init();
         container.innerHTML += `<button onclick="promptNovaCat()" style="border:none;background:none;font-size:1.5em;color:#2196F3;">+</button>`;
     }
 
+    window.excluirTask = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
+
+    window.removerCategoria = async (id) => {
+        if(confirm("Excluir categoria?")) { await deleteDoc(doc(db, "categorias", id)); carregarTarefas(); carregarCategorias(); listarCategoriasExclusao(); }
+    };
+
     async function listarCategoriasExclusao() {
         const container = document.getElementById('listaExcluirCat');
         const snap = await getDocs(collection(db, "categorias"));
@@ -270,26 +205,23 @@ init();
         });
     }
 
-    document.getElementById('btnSalvar').onclick = async () => {
-        const desc = document.getElementById('descTask').value, hora = document.getElementById('horaTask').value, data = document.getElementById('dataSeletor').value, fileInput = document.getElementById('fotoTask');
-        if(!desc || !data) return alert("Preencha descrição e data!");
-        let btn = document.getElementById('btnSalvar');
-        btn.innerText = "Enviando..."; btn.disabled = true;
-        try {
-            let base64 = fileInput.files[0] ? await comprimirFoto(fileInput.files[0]) : "";
-            await addDoc(collection(db, "tarefas"), {
-                descricao: desc, hora: hora, dataString: data,
-                categoria: document.getElementById('categoriaSelecionada').value,
-                corCategoria: document.getElementById('corSelecionada').value,
-                fotoUrl: base64, dataCriacao: new Date()
-            });
-            document.getElementById('descTask').value = ""; fileInput.value = ""; carregarTarefas();
-        } catch(e) { alert("Erro ao salvar!"); }
-        btn.innerText = "Salvar Tudo"; btn.disabled = false;
-    };
+    // INICIALIZAÇÃO E REGISTRO DE SERVICE WORKER
+    async function init() {
+        if ('serviceWorker' in navigator) {
+            try {
+                // Caminho corrigido para o repositório ProjetosRev0
+                await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', {
+                    scope: '/ProjetosRev0/'
+                });
+            } catch (err) {
+                console.error('Falha ao registrar Service Worker:', err);
+            }
+        }
+        setarData('hoje', document.getElementById('btnHoje'));
+        carregarCategorias();
+    }
 
-    setarData('hoje', document.getElementById('btnHoje'));
-    carregarCategorias();
+    init();
 </script>
 </body>
 </html>
