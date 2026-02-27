@@ -1,158 +1,68 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Minha Agenda Inteligente</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
-        .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        
-        /* 1. AJUSTE CABEÇALHO (VERMELHO) - Calendário alinhado */
-        .timeline-header { display: flex; gap: 5px; margin-bottom: 15px; align-items: stretch; height: 42px; }
-        .btn-date { flex: 1; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.65rem; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center; }
-        .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
-        #dataSeletor { flex: 2.5; padding: 0 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.85rem; height: 100%; box-sizing: border-box; }
-        .btn-config { background: none; border: none; font-size: 1.3em; cursor: pointer; display: flex; align-items: center; padding: 0 5px; }
-
-        /* 3. CABEÇALHOS DAS SESSÕES (AZUL) */
-        .header-secao { border-left: 5px solid #2196F3; padding-left: 10px; margin: 20px 0 10px; color: #2196F3; font-size: 1rem; font-weight: bold; text-transform: uppercase; }
-
-        .category-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
-        .btn-cat { white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd; background: #f9f9f9; cursor: pointer; font-size: 0.85em; }
-        .btn-cat.ativo { background: #333; color: white; }
-        
-        .secao-card { background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
-        input[type="text"], input[type="time"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        #btnSalvar { background: #4CAF50; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
-        
-        /* 2. CARD DE TAREFA (VERDE) - Lixeira e Alarme separados */
-        .tarefa-item { background: #fff; margin-bottom: 12px; padding: 15px; border-radius: 12px; border-left: 6px solid #2196F3; box-shadow: 0 3px 6px rgba(0,0,0,0.08); position: relative; }
-        .tarefa-info-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .btn-excluir { background: #fff0f0; border: none; color: #ff4d4d; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-        .tarefa-desc { margin: 10px 0; font-size: 0.95rem; color: #333; font-weight: 500; }
-        .tarefa-hora { font-size: 0.85rem; color: #2196F3; font-weight: bold; display: flex; align-items: center; gap: 5px; background: #e3f2fd; padding: 4px 10px; border-radius: 6px; width: fit-content; }
-
-        img { max-width: 100%; border-radius: 10px; margin-top: 10px; display: block; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-        .escondido { display: none !important; }
-        .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; position: relative; }
-    </style>
+    <title>Teste de Conexão Alarme</title>
 </head>
 <body>
+    <h1>Teste de Notificação</h1>
+    <p>Status: <span id="status">Aguardando...</span></p>
+    <button id="btnConectar" style="padding: 20px; font-size: 20px;">ATIVAR ALARME AGORA</button>
 
-<div class="container">
-    <div class="timeline-header">
-        <button class="btn-date" id="btnHoje" onclick="setarData('hoje', this)">Hoje</button>
-        <input type="date" id="dataSeletor" onchange="carregarTarefas()">
-        <button class="btn-config" onclick="abrirConfig()">⚙️</button>
-    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
-    <div class="category-scroll" id="listaBotoesCat"></div>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
+            authDomain: "agenda-4efa7.firebaseapp.com",
+            projectId: "agenda-4efa7",
+            storageBucket: "agenda-4efa7.appspot.com",
+            messagingSenderId: "299659202964",
+            appId: "1:299659202964:web:e358210feb4d7784f63f81"
+        };
 
-    <div class="header-secao">📝 Adicionar Tarefa</div>
-    <div class="secao-card">
-        <input type="text" id="descTask" placeholder="O que vamos fazer?">
-        <input type="time" id="horaTask">
-        <button id="btnSalvar">Salvar Tudo</button>
-    </div>
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const messaging = getMessaging(app);
 
-    <div class="header-secao">📅 Minhas Atividades</div>
-    <div id="secaoLista">
-        <div id="listaTarefas">Sincronizando...</div>
-    </div>
-</div>
+        document.getElementById('btnConectar').onclick = async () => {
+            const status = document.getElementById('status');
+            status.innerText = "Iniciando...";
 
-<div id="modalConfig" class="modal escondido">
-    <div class="modal-content">
-        <button onclick="fecharConfig()" style="position: absolute; right: 15px; top: 15px; border:none; background:none; font-size:1.2em; cursor:pointer;">✕</button>
-        <h4>Configurar Alarme</h4>
-        <button onclick="solicitarNotificacao()" style="width:100%; padding:12px; background:#2196F3; color:white; border:none; border-radius:8px;">Ativar Alarme</button>
-    </div>
-</div>
-
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-    import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
-        authDomain: "agenda-4efa7.firebaseapp.com",
-        projectId: "agenda-4efa7",
-        storageBucket: "agenda-4efa7.appspot.com",
-        messagingSenderId: "299659202964",
-        appId: "1:299659202964:web:e358210feb4d7784f63f81"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const messaging = getMessaging(app);
-    const auth = getAuth(app);
-
-    // SOLUÇÃO DOS ERROS TÉCNICOS
-    window.solicitarNotificacao = async () => {
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
             try {
-                // PRIMEIRO: Garante autenticação para evitar o erro de credenciais
+                // 1. Pedir Permissão
+                const permission = await Notification.requestPermission();
+                if (permission !== "granted") {
+                    throw new Error("Permissão de notificação negada.");
+                }
+
+                // 2. Login Anônimo (Resolve erro de credencial ausente)
+                // O domínio rafa91pinati.github.io já está autorizado no seu print
                 await signInAnonymously(auth);
-                
-                // SEGUNDO: Registra o Service Worker no escopo correto do GitHub
-                const reg = await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', { 
-                    scope: '/ProjetosRev0/' 
-                });
-                
-                // TERCEIRO: Usa a Chave Pública CORRETA do seu print
+                status.innerText = "Autenticado. Registrando serviço...";
+
+                // 3. Registrar o Service Worker manualmente (Resolve o erro 404 do GitHub subfolder)
+                const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+                status.innerText = "Serviço registrado. Obtendo Token...";
+
+                // 4. Obter o Token com a CHAVE REAL do seu print (image_d77663.png)
                 const token = await getToken(messaging, { 
                     vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
-                    serviceWorkerRegistration: reg
+                    serviceWorkerRegistration: registration
                 });
-                
-                alert("Alarme ativado com sucesso!");
-                console.log("Token:", token);
-            } catch (err) { 
+
+                console.log("SUCESSO! Token gerado:", token);
+                status.innerText = "CONECTADO COM SUCESSO!";
+                alert("Conectado! Token: " + token);
+
+            } catch (err) {
                 console.error(err);
-                alert("Erro técnico: " + err.message); 
+                status.innerText = "ERRO: " + err.message;
+                alert("Falha: " + err.message);
             }
-        }
-    };
-
-    window.abrirConfig = () => document.getElementById('modalConfig').classList.remove('escondido');
-    window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
-
-    // Funções de Interface e Dados
-    window.setarData = (tipo) => {
-        if (tipo === 'hoje') document.getElementById('dataSeletor').value = new Date().toISOString().split('T')[0];
-        carregarTarefas();
-    };
-
-    window.carregarTarefas = async () => {
-        const lista = document.getElementById('listaTarefas'), data = document.getElementById('dataSeletor').value;
-        if(!data) return;
-        const q = query(collection(db, "tarefas"), orderBy("hora", "asc"));
-        const snap = await getDocs(q);
-        lista.innerHTML = "";
-        snap.forEach(d => {
-            const t = d.data();
-            if (t.dataString === data) {
-                lista.innerHTML += `
-                    <div class="tarefa-item">
-                        <div class="tarefa-info-top">
-                            <div class="tarefa-hora">⏰ ${t.hora}</div>
-                            <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
-                        </div>
-                        <div class="tarefa-desc">${t.descricao}</div>
-                    </div>`;
-            }
-        });
-    };
-
-    window.excluirTask = async (id) => { if(confirm("Remover?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
-
-    window.setarData('hoje');
-</script>
+        };
+    </script>
 </body>
 </html>
