@@ -7,11 +7,11 @@
 </head>
 <body style="font-family: sans-serif; text-align: center; padding: 40px;">
 
-    <h1 id="status">SISTEMA AGUARDANDO</h1>
-    <p id="detalhes">Clique no botão para iniciar a validação com o Google.</p>
+    <h1 id="status">SISTEMA PRONTO</h1>
+    <p id="detalhes">Clique abaixo para estabelecer a ponte final com o Google.</p>
     
     <button id="btnConectar" style="padding: 20px; font-size: 1.2em; background: #2196F3; color: white; border: none; border-radius: 12px; cursor: pointer;">
-        CONECTAR AGORA
+        ATIVAR CONEXÃO AGORA
     </button>
 
     <script type="module">
@@ -38,18 +38,18 @@
 
         btn.onclick = async () => {
             try {
-                btn.innerText = "VALIDANDO...";
+                btn.innerText = "VALIDANDO IDENTIDADE...";
                 btn.disabled = true;
 
-                // 1. LOGIN NA HORA (Resolve erro de credencial ausente)
+                // 1. LOGIN OBRIGATÓRIO (Resolve o erro de credencial ausente)
                 const userCredential = await signInAnonymously(auth);
-                console.log("Usuário Validado:", userCredential.user.uid);
+                console.log("Acesso autorizado pelo Google.");
 
-                // 2. PEDIR PERMISSÃO
+                // 2. PEDIR PERMISSÃO DO NAVEGADOR
                 const permission = await Notification.requestPermission();
-                if (permission !== "granted") throw new Error("Permissão negada pelo navegador.");
+                if (permission !== "granted") throw new Error("Você precisa permitir notificações no navegador.");
 
-                // 3. REGISTRAR SERVIÇO (Caminho exato da sua pasta ProjetosRev0)
+                // 3. REGISTRAR O ALARME (Caminho ProjetosRev0 no GitHub)
                 const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js', {
                     scope: '/ProjetosRev0/'
                 });
@@ -62,17 +62,17 @@
 
                 if (token) {
                     statusTxt.innerText = "CONECTADO COM SUCESSO!";
-                    detalhesTxt.innerText = "Ponte com o Google estabelecida.";
+                    detalhesTxt.innerText = "A ponte com o Google foi estabelecida.";
                     btn.style.background = "#4CAF50";
                     btn.innerText = "CONEXÃO ATIVA";
-                    alert("SUCESSO! Token gerado.");
+                    alert("SUCESSO! O sistema está pronto para os alarmes.");
                     console.log("Token:", token);
                 }
 
             } catch (err) {
                 console.error(err);
                 statusTxt.innerText = "FALHA NA CONEXÃO";
-                detalhesTxt.innerText = err.message;
+                detalhesTxt.innerText = "Erro: " + err.message;
                 btn.disabled = false;
                 btn.innerText = "TENTAR NOVAMENTE";
                 btn.style.background = "#f44336";

@@ -1,4 +1,3 @@
-// Scripts estáveis para evitar falhas de carregamento
 importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-compat.js');
 
@@ -11,7 +10,7 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Prepara o terreno para as notificações futuras
+// Prepara o navegador para receber os sinais do Google
 messaging.onBackgroundMessage((payload) => {
-    console.log('Alarme detectado:', payload);
+    console.log('Sinal de alarme recebido:', payload);
 });
