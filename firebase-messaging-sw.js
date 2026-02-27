@@ -1,7 +1,7 @@
+// Scripts estáveis para evitar falhas de carregamento
 importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-compat.js');
 
-// Credenciais oficiais do seu projeto
 firebase.initializeApp({
     apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
     projectId: "agenda-4efa7",
@@ -11,10 +11,7 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// Prepara o terreno para as notificações futuras
 messaging.onBackgroundMessage((payload) => {
-    console.log('Alarme recebido em segundo plano:', payload);
-    self.registration.showNotification(payload.notification.title, {
-        body: payload.notification.body,
-        icon: 'favicon.ico'
-    });
+    console.log('Alarme detectado:', payload);
 });

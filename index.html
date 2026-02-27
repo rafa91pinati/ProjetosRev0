@@ -3,93 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minha Agenda Inteligente</title>
+    <title>Conector Agenda Inteligente</title>
 </head>
-<body style="font-family: sans-serif; text-align: center; padding: 20px;">
+<body style="font-family: sans-serif; text-align: center; padding: 40px;">
 
-    <h2 id="status">Verificando Sistema...</h2>
-    <p id="detalhes">Aguardando resposta do Google...</p>
+    <h1 id="status">SISTEMA AGUARDANDO</h1>
+    <p id="detalhes">Clique no botão para iniciar a validação com o Google.</p>
     
-    <button id="btnAlarme" disabled style="padding: 15px; font-size: 1.1em; background: #ccc; border: none; border-radius: 8px;">
-        CONECTANDO...
+    <button id="btnConectar" style="padding: 20px; font-size: 1.2em; background: #2196F3; color: white; border: none; border-radius: 12px; cursor: pointer;">
+        CONECTAR AGORA
     </button>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-    import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
-        authDomain: "agenda-4efa7.firebaseapp.com",
-        projectId: "agenda-4efa7",
-        storageBucket: "agenda-4efa7.appspot.com",
-        messagingSenderId: "299659202964",
-        appId: "1:299659202964:web:e358210feb4d7784f63f81"
-    };
+        const firebaseConfig = {
+            apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
+            authDomain: "agenda-4efa7.firebaseapp.com",
+            projectId: "agenda-4efa7",
+            storageBucket: "agenda-4efa7.appspot.com",
+            messagingSenderId: "299659202964",
+            appId: "1:299659202964:web:e358210feb4d7784f63f81"
+        };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const messaging = getMessaging(app);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const messaging = getMessaging(app);
 
-    const btn = document.getElementById('btnAlarme');
-    const statusTxt = document.getElementById('status');
+        const btn = document.getElementById('btnConectar');
+        const statusTxt = document.getElementById('status');
+        const detalhesTxt = document.getElementById('detalhes');
 
-    // 1. TENTA LOGIN IMEDIATO (Sincroniza com seu domínio autorizado)
-    const iniciarLogin = async () => {
-        try {
-            await signInAnonymously(auth);
-            console.log("Tentativa de login enviada...");
-        } catch (e) { console.error("Erro no handshake:", e); }
-    };
+        btn.onclick = async () => {
+            try {
+                btn.innerText = "VALIDANDO...";
+                btn.disabled = true;
 
-    // 2. MONITOR REAL: Libera o botão APENAS quando o Google der o OK
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            statusTxt.innerText = "SISTEMA PRONTO";
-            btn.disabled = false;
-            btn.innerText = "ATIVAR ALARME AGORA";
-            btn.style.background = "#2196F3";
-        }
-    });
+                // 1. LOGIN NA HORA (Resolve erro de credencial ausente)
+                const userCredential = await signInAnonymously(auth);
+                console.log("Usuário Validado:", userCredential.user.uid);
 
-    // Executa o login ao abrir a página
-    iniciarLogin();
+                // 2. PEDIR PERMISSÃO
+                const permission = await Notification.requestPermission();
+                if (permission !== "granted") throw new Error("Permissão negada pelo navegador.");
 
-    btn.onclick = async () => {
-        try {
-            // Se por algum motivo o sistema ainda disser que não está logado, força agora
-            if (!auth.currentUser) {
-                statusTxt.innerText = "REVALIDANDO...";
-                await signInAnonymously(auth);
+                // 3. REGISTRAR SERVIÇO (Caminho exato da sua pasta ProjetosRev0)
+                const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js', {
+                    scope: '/ProjetosRev0/'
+                });
+
+                // 4. GERAR TOKEN (Usando sua chave BDyyehg3...)
+                const token = await getToken(messaging, { 
+                    vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
+                    serviceWorkerRegistration: reg
+                });
+
+                if (token) {
+                    statusTxt.innerText = "CONECTADO COM SUCESSO!";
+                    detalhesTxt.innerText = "Ponte com o Google estabelecida.";
+                    btn.style.background = "#4CAF50";
+                    btn.innerText = "CONEXÃO ATIVA";
+                    alert("SUCESSO! Token gerado.");
+                    console.log("Token:", token);
+                }
+
+            } catch (err) {
+                console.error(err);
+                statusTxt.innerText = "FALHA NA CONEXÃO";
+                detalhesTxt.innerText = err.message;
+                btn.disabled = false;
+                btn.innerText = "TENTAR NOVAMENTE";
+                btn.style.background = "#f44336";
             }
-
-            btn.innerText = "SINCRONIZANDO...";
-            const permission = await Notification.requestPermission();
-            if (permission !== "granted") throw new Error("Permissão negada.");
-
-            // Registro na pasta ProjetosRev0
-            const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js', {
-                scope: '/ProjetosRev0/'
-            });
-
-            // Chave VAPID correta (BDyyehg3...)
-            const token = await getToken(messaging, { 
-                vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
-                serviceWorkerRegistration: reg
-            });
-
-            if (token) {
-                statusTxt.innerText = "SISTEMA ATIVADO!";
-                btn.style.background = "#4CAF50";
-                alert("SUCESSO! Alarme pronto.");
-            }
-        } catch (err) {
-            statusTxt.innerText = "FALHA TÉCNICA";
-            alert("Erro: " + err.message);
-            btn.disabled = false;
-        }
-    };
-</script>
+        };
+    </script>
 </body>
 </html>
