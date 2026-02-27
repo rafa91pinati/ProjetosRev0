@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-	<link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minha Agenda Inteligente</title>
@@ -9,48 +9,36 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 15px; }
         .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative; }
         
-        /* Cabeçalho de Datas e Engrenagem */
         .timeline-header { display: flex; gap: 8px; margin-bottom: 15px; align-items: center; overflow-x: auto; padding-bottom: 5px; }
-        .btn-date { 
-            flex: 0 0 auto; min-width: 70px; padding: 10px; border-radius: 10px; border: 1px solid #ddd;
-            background: #fff; cursor: pointer; font-size: 0.8em; font-weight: bold; transition: 0.3s;
-        }
+        .btn-date { flex: 0 0 auto; min-width: 70px; padding: 10px; border-radius: 10px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.8em; font-weight: bold; transition: 0.3s; }
         .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
         #dataSeletor { flex: 1; padding: 8px; border-radius: 10px; border: 1px solid #ddd; min-width: 110px; }
         .btn-config { background: none; border: none; font-size: 1.5em; cursor: pointer; padding: 0 5px; flex-shrink: 0; }
 
-        /* Categorias */
         .category-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
-        .btn-cat { 
-            white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd;
-            background: #f9f9f9; cursor: pointer; font-size: 0.85em;
-        }
+        .btn-cat { white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd; background: #f9f9f9; cursor: pointer; font-size: 0.85em; }
         .btn-cat.ativo { background: #333; color: white; border-color: #333; }
 
-        /* Estilos Gerais */
         .secao-card { background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
         h3 { margin-top: 0; font-size: 1em; color: #555; display: flex; justify-content: space-between; align-items: center; }
         input[type="text"], input[type="time"], input[type="number"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         button#btnSalvar { background: #4CAF50; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
         
-        /* Lista de Tarefas */
-        .tarefa-item { 
-            background: #fff; margin-bottom: 10px; padding: 15px; border-radius: 10px;
-            border-left: 6px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative;
-        }
+        .tarefa-item { background: #fff; margin-bottom: 10px; padding: 15px; border-radius: 10px; border-left: 6px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
         .tarefa-concluida { opacity: 0.5; text-decoration: line-through; }
         .btn-excluir { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #ff4d4d; font-size: 1.1em; cursor: pointer; }
         .check-task { width: 20px; height: 20px; margin-right: 10px; vertical-align: middle; }
         img { max-width: 100%; border-radius: 8px; margin-top: 10px; display: block; }
 
-        /* Modal / Pop-up */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
         .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; position: relative; }
         .escondido { display: none !important; }
         .modal-tabs { display: flex; justify-content: space-around; margin-bottom: 20px; border-bottom: 1px solid #eee; }
         .tab-btn { background: none; border: none; font-size: 1.5em; cursor: pointer; padding: 10px; opacity: 0.4; }
         .tab-btn.ativo { opacity: 1; border-bottom: 3px solid #2196F3; }
-        .item-cat-excluir { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+        
+        /* Botão flutuante de instalação */
+        #btnInstalarApp { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; background: #2196F3; color: white; border: none; padding: 15px 25px; border-radius: 30px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none; }
     </style>
 </head>
 <body>
@@ -69,7 +57,7 @@
     <input type="hidden" id="corSelecionada" value="#4CAF50">
 
     <div class="secao-card">
-        <h3>📝 Nova Tarefa <span style="font-size: 0.8em; color: #2196F3;" id="txtDataSelecionada"></span></h3>
+        <h3>📝 Nova Tarefa <span id="txtDataSelecionada"></span></h3>
         <div id="formConteudo">
             <input type="text" id="descTask" placeholder="O que você vai fazer?">
             <div style="display: flex; gap: 8px;">
@@ -86,25 +74,24 @@
     </div>
 </div>
 
+<button id="btnInstalarApp">📲 Instalar como Aplicativo</button>
+
 <div id="modalConfig" class="modal escondido">
     <div class="modal-content">
         <button onclick="fecharConfig()" style="position: absolute; right: 15px; top: 15px; border:none; background:none; font-size:1.2em; cursor:pointer;">✕</button>
-        
         <div class="modal-tabs">
             <button class="tab-btn ativo" id="tabAlarme" onclick="abaConfig('alarme')">🔔</button>
             <button class="tab-btn" id="tabCat" onclick="abaConfig('categorias')">📂</button>
         </div>
-
         <div id="conteudoAlarme">
-            <h4>Tempo do Alarme</h4>
+            <h4>Configuração de Alerta</h4>
             <p style="font-size:0.8em; color: #666;">Avisar quantos minutos antes?</p>
             <input type="number" id="inputMinutosAlarme" value="15">
-            <button onclick="fecharConfig()" style="background:#2196F3;">Definir Tempo</button>
+            <button onclick="solicitarNotificacao()" style="background:#2196F3; width:100%; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer;">Ativar Alarme no Celular</button>
         </div>
-
         <div id="conteudoCategorias" class="escondido">
             <h4>Excluir Categorias</h4>
-            <div id="listaExcluirCat" style="max-height: 250px; overflow-y: auto;"></div>
+            <div id="listaExcluirCat"></div>
         </div>
     </div>
 </div>
@@ -112,6 +99,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
@@ -119,16 +107,55 @@
         projectId: "agenda-4efa7",
         storageBucket: "agenda-4efa7.appspot.com",
         messagingSenderId: "299659202964",
-        appId: "1:299659202964:web:e358210feb4d7784f63f81",
-        measurementId: "G-PGBEQYD02B"
+        appId: "1:299659202964:web:e358210feb4d7784f63f81"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const messaging = getMessaging(app);
 
+    // --- LÓGICA DE INSTALAÇÃO (FORÇAR CONVITE) ---
+    let promptInstalacao;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        promptInstalacao = e;
+        document.getElementById('btnInstalarApp').style.display = 'block';
+    });
+
+    document.getElementById('btnInstalarApp').addEventListener('click', async () => {
+        if (promptInstalacao) {
+            promptInstalacao.prompt();
+            const { outcome } = await promptInstalacao.userChoice;
+            if (outcome === 'accepted') document.getElementById('btnInstalarApp').style.display = 'none';
+        }
+    });
+
+    // --- NOTIFICAÇÕES (VAPID) ---
+    window.solicitarNotificacao = async () => {
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+            try {
+                // SUBSTITUA PELA SUA CHAVE VAPID DO FIREBASE
+                const token = await getToken(messaging, { vapidKey: 'COLE_AQUI_SUA_CHAVE_VAPID_DO_FIREBASE' });
+                alert("Alarme Ativado com Sucesso!");
+                console.log("Token:", token);
+            } catch (err) { console.error("Erro ao obter token:", err); }
+        } else {
+            alert("Você precisa permitir as notificações.");
+        }
+    };
+
+    // --- REGISTRO DO SERVICE WORKER ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('firebase-messaging-sw.js').then(reg => {
+                console.log('SW registrado!', reg);
+            });
+        });
+    }
+
+    // --- RESTANTE DA LOGICA ANTERIOR (MANTIDA) ---
     let filtroDataAtual = 'hoje';
-
-    // --- COMPRESSÃO DE IMAGEM ---
     const redimensionarEConverter = (file) => {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -150,19 +177,12 @@
         });
     };
 
-    // --- MODAL CONFIG ---
-    window.abrirConfig = () => {
-        document.getElementById('modalConfig').classList.remove('escondido');
-        abaConfig('alarme');
-    };
+    window.abrirConfig = () => { document.getElementById('modalConfig').classList.remove('escondido'); abaConfig('alarme'); };
     window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
 
     window.abaConfig = (tipo) => {
-        const tAlarme = document.getElementById('tabAlarme');
-        const tCat = document.getElementById('tabCat');
-        const cAlarme = document.getElementById('conteudoAlarme');
-        const cCat = document.getElementById('conteudoCategorias');
-
+        const tAlarme = document.getElementById('tabAlarme'), tCat = document.getElementById('tabCat');
+        const cAlarme = document.getElementById('conteudoAlarme'), cCat = document.getElementById('conteudoCategorias');
         if(tipo === 'alarme') {
             tAlarme.classList.add('ativo'); tCat.classList.remove('ativo');
             cAlarme.classList.remove('escondido'); cCat.classList.add('escondido');
@@ -179,52 +199,34 @@
         container.innerHTML = "";
         snap.forEach(d => {
             const c = d.data();
-            container.innerHTML += `
-                <div class="item-cat-excluir">
-                    <span>${c.nome}</span>
-                    <button onclick="removerCategoria('${d.id}', '${c.nome}')" style="width:auto; background:#ff4d4d; border-radius:5px; padding:5px 10px;">Excluir</button>
-                </div>`;
+            container.innerHTML += `<div class="item-cat-excluir"><span>${c.nome}</span><button onclick="removerCategoria('${d.id}', '${c.nome}')" style="width:auto; background:#ff4d4d; color:white; border:none; border-radius:5px; padding:5px 10px; cursor:pointer;">Excluir</button></div>`;
         });
     }
 
     window.removerCategoria = async (id, nome) => {
-        if(confirm(`Excluir "${nome}"? As tarefas voltarão para "Geral".`)) {
+        if(confirm(`Excluir "${nome}"?`)) {
             await deleteDoc(doc(db, "categorias", id));
             const q = query(collection(db, "tarefas"), where("categoria", "==", nome));
             const snap = await getDocs(q);
             const batch = snap.docs.map(t => updateDoc(doc(db, "tarefas", t.id), { categoria: "Geral", corCategoria: "#4CAF50" }));
             await Promise.all(batch);
-            alert("Categoria removida!");
             location.reload();
         }
     };
 
-    // --- DATAS E FILTROS ---
     window.setarData = (tipo, el) => {
-        const hoje = new Date();
         const input = document.getElementById('dataSeletor');
         document.querySelectorAll('.btn-date').forEach(b => b.classList.remove('ativo'));
-        
-        if (tipo === 'hoje') {
-            input.value = hoje.toISOString().split('T')[0];
-            el.classList.add('ativo'); filtroDataAtual = 'hoje';
-        } else if (tipo === 'amanha') {
-            const am = new Date(hoje); am.setDate(hoje.getDate() + 1);
-            input.value = am.toISOString().split('T')[0];
-            el.classList.add('ativo'); filtroDataAtual = 'amanha';
-        } else if (tipo === 'semanal') {
-            el.classList.add('ativo'); filtroDataAtual = 'semanal';
-        } else { filtroDataAtual = 'custom'; }
-        
+        if (tipo === 'hoje') { input.value = new Date().toISOString().split('T')[0]; el.classList.add('ativo'); filtroDataAtual = 'hoje'; }
+        else if (tipo === 'amanha') { const am = new Date(); am.setDate(am.getDate()+1); input.value = am.toISOString().split('T')[0]; el.classList.add('ativo'); filtroDataAtual = 'amanha'; }
+        else if (tipo === 'semanal') { el.classList.add('ativo'); filtroDataAtual = 'semanal'; }
+        else { filtroDataAtual = 'custom'; }
         atualizarLabelData(); carregarTarefas();
     };
 
     function atualizarLabelData() {
         const val = document.getElementById('dataSeletor').value;
-        if(val) {
-            const d = val.split('-');
-            document.getElementById('txtDataSelecionada').innerText = `(${d[2]}/${d[1]})`;
-        }
+        if(val) { const d = val.split('-'); document.getElementById('txtDataSelecionada').innerText = `(${d[2]}/${d[1]})`; }
     }
 
     window.selecionarCat = (nome, cor, el) => {
@@ -246,73 +248,39 @@
         container.innerHTML += `<button onclick="promptNovaCat()" style="border:none; background:none; font-size:1.5em; cursor:pointer; color:#2196F3; margin-left:5px;">+</button>`;
     }
 
-    // --- TAREFAS ---
     async function carregarTarefas() {
         const lista = document.getElementById('listaTarefas');
         const dataFiltro = document.getElementById('dataSeletor').value;
         const catFiltro = document.getElementById('categoriaSelecionada').value;
-
         try {
-            let q = query(collection(db, "tarefas"), orderBy("dataCriacao", "desc"));
-            const snap = await getDocs(q);
+            const snap = await getDocs(query(collection(db, "tarefas"), orderBy("dataCriacao", "desc")));
             lista.innerHTML = "";
             snap.forEach(d => {
                 const t = d.data();
                 if (catFiltro !== "Geral" && t.categoria !== catFiltro) return;
                 if (filtroDataAtual !== 'semanal' && t.dataString !== dataFiltro) return;
-
                 const cor = t.corCategoria || "#ccc";
-                lista.innerHTML += `
-                    <div class="tarefa-item ${t.concluida ? 'tarefa-concluida' : ''}" style="border-left-color: ${cor}">
-                        <input type="checkbox" class="check-task" ${t.concluida ? 'checked' : ''} onclick="toggleCheck('${d.id}', ${t.concluida})">
-                        <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <small style="color:${cor}; font-weight:bold">${t.categoria}</small>
-                            ${t.hora ? `<span style="font-size:0.8em; color:#666;">⏰ ${t.hora}</span>` : ''}
-                        </div>
-                        <p style="margin: 8px 0;">${t.descricao}</p>
-                        ${t.fotoUrl ? `<img src="${t.fotoUrl}">` : ""}
-                    </div>`;
+                lista.innerHTML += `<div class="tarefa-item ${t.concluida ? 'tarefa-concluida' : ''}" style="border-left-color: ${cor}"><input type="checkbox" class="check-task" ${t.concluida ? 'checked' : ''} onclick="toggleCheck('${d.id}', ${t.concluida})"><button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button><div style="display:flex; justify-content:space-between; align-items:center;"><small style="color:${cor}; font-weight:bold">${t.categoria}</small>${t.hora ? `<span style="font-size:0.8em; color:#666;">⏰ ${t.hora}</span>` : ''}</div><p style="margin: 8px 0;">${t.descricao}</p>${t.fotoUrl ? `<img src="${t.fotoUrl}">` : ""}</div>`;
             });
         } catch (e) { console.error(e); }
     }
 
     document.getElementById('btnSalvar').addEventListener('click', async () => {
-        const desc = document.getElementById('descTask').value;
-        const hora = document.getElementById('horaTask').value;
-        const dataFull = document.getElementById('dataSeletor').value;
-        const fileInput = document.getElementById('fotoTask');
+        const desc = document.getElementById('descTask').value, hora = document.getElementById('horaTask').value, dataFull = document.getElementById('dataSeletor').value, fileInput = document.getElementById('fotoTask');
         if (!desc) return alert("Escreva a tarefa!");
-
         const btn = document.getElementById('btnSalvar');
         btn.disabled = true; btn.innerText = "Salvando...";
-
         try {
             let base64Image = fileInput.files[0] ? await redimensionarEConverter(fileInput.files[0]) : "";
-            await addDoc(collection(db, "tarefas"), {
-                descricao: desc, hora: hora, dataString: dataFull,
-                categoria: document.getElementById('categoriaSelecionada').value,
-                corCategoria: document.getElementById('corSelecionada').value,
-                fotoUrl: base64Image, concluida: false, dataCriacao: new Date()
-            });
-            document.getElementById('descTask').value = "";
-            document.getElementById('horaTask').value = "";
-            fileInput.value = "";
-            btn.disabled = false; btn.innerText = "Salvar na Agenda";
-            carregarTarefas();
+            await addDoc(collection(db, "tarefas"), { descricao: desc, hora: hora, dataString: dataFull, categoria: document.getElementById('categoriaSelecionada').value, corCategoria: document.getElementById('corSelecionada').value, fotoUrl: base64Image, concluida: false, dataCriacao: new Date() });
+            document.getElementById('descTask').value = ""; document.getElementById('horaTask').value = ""; fileInput.value = "";
+            btn.disabled = false; btn.innerText = "Salvar na Agenda"; carregarTarefas();
         } catch (e) { alert("Erro ao salvar!"); btn.disabled = false; }
     });
 
     window.toggleCheck = async (id, status) => { await updateDoc(doc(db, "tarefas", id), { concluida: !status }); carregarTarefas(); };
     window.excluirTask = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
-    window.promptNovaCat = async () => { 
-        const n = prompt("Nome da Categoria:"); 
-        if(n) { 
-            const h = Math.floor(Math.random()*360); 
-            await addDoc(collection(db, "categorias"), { nome: n, cor: `hsl(${h},70%,45%)`, criadoEm: new Date() }); 
-            carregarCategorias(); 
-        } 
-    };
+    window.promptNovaCat = async () => { const n = prompt("Nome da Categoria:"); if(n) { const h = Math.floor(Math.random()*360); await addDoc(collection(db, "categorias"), { nome: n, cor: `hsl(${h},70%,45%)`, criadoEm: new Date() }); carregarCategorias(); } };
 
     setarData('hoje', document.getElementById('btnHoje'));
     carregarCategorias();
