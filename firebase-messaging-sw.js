@@ -1,8 +1,8 @@
-importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/12.4.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/12.4.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-    apiKey: "AIzaSyAEQeIKc1MCrV8BJr0CH_mfjwCp1YiRC8s",
+  apiKey: "AIzaSyAEQeIKc1MCrV8BJr0CH_mfjwCp1YiRC8s",
   authDomain: "agenda-4efa7.firebaseapp.com",
   projectId: "agenda-4efa7",
   storageBucket: "agenda-4efa7.appspot.com",
@@ -16,9 +16,8 @@ self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', () => self.clients.claim());
 
 messaging.onBackgroundMessage((payload) => {
-    console.log('Mensagem em segundo plano:', payload);
-    self.registration.showNotification(payload.notification.title, {
-        body: payload.notification.body,
-        icon: 'https://cdn-icons-png.flaticon.com/512/311/311022.png'
-    });
+  self.registration.showNotification(payload.notification.title, {
+    body: payload.notification.body,
+    icon: '/ProjetosRev0/311022.png'
+  });
 });
