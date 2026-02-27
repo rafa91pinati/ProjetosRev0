@@ -75,7 +75,7 @@
 </div>
 
 <script type="module">
-    // LÓGICA DE ATUALIZAÇÃO AUTOMÁTICA
+    // --- LÓGICA DE ATUALIZAÇÃO AUTOMÁTICA ---
     async function checkUpdate() {
         if ('serviceWorker' in navigator) {
             const regs = await navigator.serviceWorker.getRegistrations();
@@ -93,6 +93,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
@@ -106,6 +107,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const messaging = getMessaging(app);
+    const auth = getAuth(app);
 
     // COMPRESSÃO DE FOTO PARA FIREBASE
     const comprimirFoto = (file) => {
@@ -129,26 +131,31 @@
         });
     };
 
-    // ALARME COM CHAVE VAPID ATUALIZADA
+    // ALARME COM LOGIN ANÔNIMO E CHAVE VAPID ATUALIZADA
     window.solicitarNotificacao = async () => {
         const permission = await Notification.requestPermission();
         if (permission === "granted") {
             try {
+                // Força login anônimo para destravar erro de token
+                await signInAnonymously(auth);
+                
                 // Chave capturada do seu console
                 const token = await getToken(messaging, { 
                     vapidKey: 'BKj4JLMSHmF3LHBQNU-NKVdlIaLBnhOow5qF5BqbTDssWgEM5R-g9v7hujX8iUC_bmEq5SligyEA53wo_cx8HUE' 
                 });
+                
                 alert("Alarme ativado com sucesso!");
-                console.log("Token:", token);
+                console.log("Token do dispositivo:", token);
             } catch (err) { 
                 console.error(err);
-                alert("Erro ao obter token. Certifique-se de adicionar rafa91pinati.github.io no Authentication."); 
+                alert("Erro ao obter token. Ative o 'Login Anônimo' no Authentication do Firebase."); 
             }
-        } else { alert("Permita as notificações."); }
+        } else { alert("Permita as notificações no navegador."); }
     };
 
     window.abrirConfig = () => { document.getElementById('modalConfig').classList.remove('escondido'); listarCategoriasExclusao(); };
     window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
+    
     window.mudarAba = (aba) => {
         const cA = document.getElementById('conteudoAlarme'), cC = document.getElementById('conteudoCategorias');
         const tA = document.getElementById('tabAlarme'), tC = document.getElementById('tabCat');
@@ -178,18 +185,20 @@
             lista.innerHTML = "";
             snap.forEach(d => {
                 const t = d.data();
-                const filtroData = document.getElementById('dataSeletor').value;
                 if (catFiltro !== "Geral" && t.categoria !== catFiltro) return;
-                if (t.dataString !== filtroData) return;
-                lista.innerHTML += `<div class="tarefa-item" style="border-left-color:${t.corCategoria || '#2196F3'}">
-                    <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
-                    <small style="color:${t.corCategoria};font-weight:bold">${t.categoria || 'Geral'}</small>
-                    <span style="float:right;">⏰ ${t.hora || '--:--'}</span>
-                    <p style="margin:8px 0;">${t.descricao}</p>
-                    ${t.fotoUrl ? `<img src="${t.fotoUrl}" style="width:100%; border-radius:10px;">` : ""}
-                </div>`;
+                if (t.dataString !== dataFiltro) return;
+                
+                // Renderização garantida da Foto
+                lista.innerHTML += `
+                    <div class="tarefa-item" style="border-left: 6px solid ${t.corCategoria || '#2196F3'}">
+                        <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
+                        <small style="color:${t.corCategoria};font-weight:bold">${t.categoria || 'Geral'}</small>
+                        <span style="float:right;">⏰ ${t.hora || '--:--'}</span>
+                        <p style="margin:8px 0;">${t.descricao}</p>
+                        ${t.fotoUrl ? `<img src="${t.fotoUrl}" style="width:100%; border-radius:10px; margin-top:5px;">` : ""}
+                    </div>`;
             });
-        } catch(e) {}
+        } catch(e) { console.error(e); }
     }
 
     async function carregarCategorias() {
