@@ -3,40 +3,33 @@
 <head>
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minha Agenda Inteligente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minha Agenda Inteligente Pro</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
         .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         
-        /* CABEÇALHO GRID - TRAVADO PARA NÃO ROLAR */
-        .timeline-header { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr 1fr 1.5fr auto; 
-            gap: 4px; 
-            margin-bottom: 15px; 
-            align-items: center;
-        }
-
-        .btn-date { 
-            width: 100%; padding: 10px 0; border-radius: 8px; border: 1px solid #ddd; 
-            background: #fff; cursor: pointer; font-size: 0.65rem; font-weight: bold; text-align: center;
-        }
+        /* CABEÇALHO GRID RESPONSIVO */
+        .timeline-header { display: grid; grid-template-columns: 1fr 1fr 1fr 1.5fr auto; gap: 4px; margin-bottom: 15px; align-items: center; }
+        .btn-date { width: 100%; padding: 10px 0; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.65rem; font-weight: bold; text-align: center; }
         .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
-
         #dataSeletor { width: 100%; padding: 8px 2px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.65rem; height: 38px; }
-
         .btn-config { background: none; border: none; font-size: 1.2em; cursor: pointer; }
 
-        /* FORMULÁRIO */
+        /* CATEGORIAS */
+        .category-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
+        .btn-cat { white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd; background: #f9f9f9; cursor: pointer; font-size: 0.8em; }
+        .btn-cat.ativo { background: #333; color: white; border-color: #333; }
+
+        /* FORMULÁRIO E TAREFAS */
         .secao-card { background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
         input[type="text"], input[type="time"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         #btnSalvar { background: #4CAF50; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
         
-        /* LISTA */
-        .tarefa-item { background: #fff; margin-bottom: 10px; padding: 12px; border-radius: 10px; border-left: 6px solid #2196F3; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
+        .tarefa-item { background: #fff; margin-bottom: 10px; padding: 12px; border-radius: 10px; border-left: 6px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
         .btn-excluir { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #ff4d4d; font-size: 1.1em; cursor: pointer; }
-        
+        img { max-width: 100%; border-radius: 8px; margin-top: 10px; display: block; border: 1px solid #eee; }
+
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
         .escondido { display: none !important; }
         .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; }
@@ -53,15 +46,20 @@
         <button class="btn-config" onclick="abrirConfig()">⚙️</button>
     </div>
 
+    <div class="category-scroll" id="listaBotoesCat"></div>
+    <input type="hidden" id="categoriaSelecionada" value="Geral">
+    <input type="hidden" id="corSelecionada" value="#4CAF50">
+
     <div class="secao-card">
-        <h3 style="margin-top:0; font-size: 0.9em;">📝 Nova Tarefa</h3>
-        <input type="text" id="descTask" placeholder="O que vamos fazer?">
-        <input type="time" id="horaTask">
+        <input type="text" id="descTask" placeholder="Descrição da tarefa...">
+        <div style="display: flex; gap: 8px;">
+            <input type="time" id="horaTask" style="flex: 1;">
+            <input type="file" id="fotoTask" accept="image/*" style="flex: 1.5; font-size: 0.7em; align-self: center;">
+        </div>
         <button id="btnSalvar">Salvar Tudo</button>
     </div>
 
     <div id="secaoLista">
-        <h3 style="font-size: 0.9em;">📋 Atividades <span id="labelData"></span></h3>
         <div id="listaTarefas">Carregando tarefas...</div>
     </div>
 </div>
@@ -69,14 +67,16 @@
 <div id="modalConfig" class="modal escondido">
     <div class="modal-content">
         <button onclick="fecharConfig()" style="float:right; border:none; background:none; font-size:1.2em;">✕</button>
-        <h4>Configurar Notificações</h4>
+        <h4>Configurar App</h4>
         <button onclick="solicitarNotificacao()" style="width:100%; padding:10px; background:#2196F3; color:white; border:none; border-radius:8px;">Ativar Alarme</button>
+        <hr>
+        <div id="listaExcluirCat"></div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
     const firebaseConfig = {
@@ -94,101 +94,128 @@
 
     let filtroDataAtual = 'hoje';
 
-    // FUNÇÕES DE INTERFACE
-    window.abrirConfig = () => document.getElementById('modalConfig').classList.remove('escondido');
-    window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
+    // COMPRESSÃO DE FOTO
+    const redimensionarFoto = (file) => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 600;
+                    let width = img.width, height = img.height;
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.6));
+                };
+            };
+        });
+    };
 
-    window.setarData = (tipo, el) => {
-        const input = document.getElementById('dataSeletor');
-        document.querySelectorAll('.btn-date').forEach(b => b.classList.remove('ativo'));
-        
-        if (tipo === 'hoje') {
-            input.value = new Date().toISOString().split('T')[0];
-            if(el) el.classList.add('ativo');
-            filtroDataAtual = 'hoje';
-        } else if (tipo === 'amanha') {
-            const am = new Date(); am.setDate(am.getDate() + 1);
-            input.value = am.toISOString().split('T')[0];
-            if(el) el.classList.add('ativo');
-            filtroDataAtual = 'amanha';
-        } else if (tipo === 'semanal') {
-            if(el) el.classList.add('ativo');
-            filtroDataAtual = 'semanal';
-        } else {
-            filtroDataAtual = 'custom';
-        }
+    // LOGICA DE CATEGORIAS
+    window.selecionarCat = (nome, cor, el) => {
+        document.querySelectorAll('.btn-cat').forEach(b => b.classList.remove('ativo'));
+        el.classList.add('ativo');
+        document.getElementById('categoriaSelecionada').value = nome;
+        document.getElementById('corSelecionada').value = cor;
         carregarTarefas();
     };
 
-    // BUSCAR TAREFAS NO FIREBASE
+    async function carregarCategorias() {
+        const container = document.getElementById('listaBotoesCat');
+        const snap = await getDocs(query(collection(db, "categorias"), orderBy("criadoEm", "asc")));
+        container.innerHTML = `<button class="btn-cat ativo" onclick="selecionarCat('Geral', '#4CAF50', this)">Geral</button>`;
+        snap.forEach(d => {
+            const c = d.data();
+            container.innerHTML += `<button class="btn-cat" style="border-bottom: 3px solid ${c.cor}" onclick="selecionarCat('${c.nome}', '${c.cor}', this)">${c.nome}</button>`;
+        });
+        container.innerHTML += `<button onclick="promptNovaCat()" style="border:none; background:none; font-size:1.5em; color:#2196F3; cursor:pointer;">+</button>`;
+    }
+
+    // TAREFAS
     async function carregarTarefas() {
         const lista = document.getElementById('listaTarefas');
         const dataFiltro = document.getElementById('dataSeletor').value;
+        const catFiltro = document.getElementById('categoriaSelecionada').value;
         lista.innerHTML = "Buscando...";
 
         try {
             const q = query(collection(db, "tarefas"), orderBy("dataCriacao", "desc"));
             const snap = await getDocs(q);
             lista.innerHTML = "";
-            let contador = 0;
-
             snap.forEach(d => {
                 const t = d.data();
-                // Filtro de data
+                if (catFiltro !== "Geral" && t.categoria !== catFiltro) return;
                 if (filtroDataAtual !== 'semanal' && t.dataString !== dataFiltro) return;
                 
-                contador++;
+                const cor = t.corCategoria || "#ccc";
                 lista.innerHTML += `
-                    <div class="tarefa-item">
+                    <div class="tarefa-item" style="border-left-color: ${cor}">
                         <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
-                        <strong>${t.hora || '--:--'}</strong> - ${t.descricao}
+                        <small style="color:${cor}; font-weight:bold">${t.categoria || 'Geral'}</small>
+                        <span style="float:right; font-size:0.8em;">⏰ ${t.hora || '--:--'}</span>
+                        <p style="margin:8px 0;">${t.descricao}</p>
+                        ${t.fotoUrl ? `<img src="${t.fotoUrl}">` : ""}
                     </div>`;
             });
-
-            if(contador === 0) lista.innerHTML = "Nada agendado para este dia.";
-        } catch (e) {
-            console.error(e);
-            lista.innerHTML = "Erro ao carregar do banco.";
-        }
+        } catch (e) { lista.innerHTML = "Erro ao carregar."; }
     }
 
-    // SALVAR NOVA TAREFA
     document.getElementById('btnSalvar').onclick = async () => {
         const desc = document.getElementById('descTask').value;
         const hora = document.getElementById('horaTask').value;
         const data = document.getElementById('dataSeletor').value;
+        const fileInput = document.getElementById('fotoTask');
+        if(!desc) return alert("Digite a tarefa!");
 
-        if(!desc || !data) return alert("Preencha a descrição e a data!");
+        const btn = document.getElementById('btnSalvar');
+        btn.innerText = "Salvando..."; btn.disabled = true;
 
         try {
+            let base64Image = fileInput.files[0] ? await redimensionarFoto(fileInput.files[0]) : "";
             await addDoc(collection(db, "tarefas"), {
-                descricao: desc,
-                hora: hora,
-                dataString: data,
-                dataCriacao: new Date()
+                descricao: desc, hora: hora, dataString: data,
+                categoria: document.getElementById('categoriaSelecionada').value,
+                corCategoria: document.getElementById('corSelecionada').value,
+                fotoUrl: base64Image, dataCriacao: new Date()
             });
             document.getElementById('descTask').value = "";
+            fileInput.value = "";
             carregarTarefas();
         } catch (e) { alert("Erro ao salvar!"); }
+        btn.innerText = "Salvar Tudo"; btn.disabled = false;
     };
 
-    window.excluirTask = async (id) => {
-        if(confirm("Excluir?")) {
-            await deleteDoc(doc(db, "tarefas", id));
-            carregarTarefas();
+    // FUNÇÕES COMPLEMENTARES
+    window.setarData = (tipo, el) => {
+        const input = document.getElementById('dataSeletor');
+        document.querySelectorAll('.btn-date').forEach(b => b.classList.remove('ativo'));
+        if (tipo === 'hoje') { input.value = new Date().toISOString().split('T')[0]; if(el) el.classList.add('ativo'); filtroDataAtual = 'hoje'; }
+        else if (tipo === 'amanha') { const am = new Date(); am.setDate(am.getDate()+1); input.value = am.toISOString().split('T')[0]; if(el) el.classList.add('ativo'); filtroDataAtual = 'amanha'; }
+        else if (tipo === 'semanal') { if(el) el.classList.add('ativo'); filtroDataAtual = 'semanal'; }
+        carregarTarefas();
+    };
+
+    window.promptNovaCat = async () => {
+        const n = prompt("Nome da Categoria:");
+        if(n) {
+            const h = Math.floor(Math.random()*360);
+            await addDoc(collection(db, "categorias"), { nome: n, cor: `hsl(${h},70%,45%)`, criadoEm: new Date() });
+            carregarCategorias();
         }
     };
 
-    window.solicitarNotificacao = async () => {
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-            const token = await getToken(messaging, { vapidKey: 'COLE_AQUI_SUA_VAPID' });
-            alert("Notificações Prontas!");
-        }
-    };
+    window.excluirTask = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
+    window.abrirConfig = () => document.getElementById('modalConfig').classList.remove('escondido');
+    window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
 
-    // INICIAR APP
+    // INICIAR
     setarData('hoje', document.getElementById('btnHoje'));
+    carregarCategorias();
 </script>
 </body>
 </html>
