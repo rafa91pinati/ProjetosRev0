@@ -16,7 +16,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
     import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
     const firebaseConfig = {
@@ -35,28 +35,38 @@
     const btn = document.getElementById('btnConectar');
     const statusTxt = document.getElementById('status');
 
+    // 1. INICIA O LOGIN IMEDIATO
+    signInAnonymously(auth).catch(e => console.error("Erro Auth:", e));
+
+    // 2. SÓ LIBERA O BOTÃO QUANDO O LOGIN ESTIVER 100% PRONTO
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            statusTxt.innerText = "SISTEMA VALIDADO";
+            btn.disabled = false;
+            btn.style.background = "#2196F3";
+            btn.innerText = "ATIVAR ALARME AGORA";
+        }
+    });
+
     btn.onclick = async () => {
         try {
             btn.innerText = "SINCRONIZANDO...";
             btn.disabled = true;
 
-            // 1. LOGIN E RENOVAÇÃO DE IDENTIDADE (Cura a Falha Técnica)
-            const userCredential = await signInAnonymously(auth);
-            // Isso força o Google a entregar um crachá de acesso novo
-            await userCredential.user.getIdToken(true); 
+            // 3. RENOVA O CRACHÁ DE ACESSO (Resolve a 'Falha Técnica')
+            const user = auth.currentUser;
+            if (user) { await user.getIdToken(true); }
 
             const permission = await Notification.requestPermission();
-            if (permission !== "granted") throw new Error("Permissão de alarme negada.");
+            if (permission !== "granted") throw new Error("Permissão negada.");
 
-            // 2. REGISTRO COM ESCOPO RESTRITO (Sua pasta ProjetosRev0)
-            const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js', { 
+            // 4. REGISTRO E ESPERA (Resolve 'no active Service Worker')
+            const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js', { 
                 scope: '/ProjetosRev0/' 
             });
-            
-            // 3. AGUARDA O ALARME FICAR ATIVO
-            const registration = await navigator.serviceWorker.ready;
+            await navigator.serviceWorker.ready; // AGUARDA O ATIVAMENTO REAL
 
-            // 4. GERA O TOKEN (Sua chave VAPID BDyyehg3...)
+            // 5. GERA O TOKEN (Sua chave VAPID BDyyehg3...)
             const token = await getToken(messaging, { 
                 vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
                 serviceWorkerRegistration: registration
@@ -65,9 +75,9 @@
             if (token) {
                 statusTxt.innerText = "CONECTADO COM SUCESSO!";
                 btn.style.background = "#4CAF50";
-                btn.innerText = "SUCESSO TOTAL";
-                alert("CONECTADO! O esqueleto de ouro funcionou.");
-                console.log("Seu Token:", token);
+                btn.innerText = "CONEXÃO ATIVA";
+                alert("SUCESSO! A ponte foi estabelecida.");
+                console.log("Token:", token);
             }
         } catch (err) {
             console.error(err);

@@ -10,7 +10,7 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Sincroniza o arquivo com a memória do navegador imediatamente
+// Sincronização imediata para evitar erros de avaliação
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', () => self.clients.claim());
 
