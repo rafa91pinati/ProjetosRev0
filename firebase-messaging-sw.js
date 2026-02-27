@@ -10,10 +10,13 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Força o navegador a usar este arquivo novo IMEDIATAMENTE
+// Sincroniza o arquivo com a memória do navegador imediatamente
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', () => self.clients.claim());
 
 messaging.onBackgroundMessage((payload) => {
-    console.log('Sinal de alarme:', payload);
+    self.registration.showNotification(payload.notification.title, {
+        body: payload.notification.body,
+        icon: 'favicon.ico'
+    });
 });
