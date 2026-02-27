@@ -1,7 +1,7 @@
-// Usando bibliotecas compatíveis para garantir estabilidade no segundo plano
 importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-compat.js');
 
+// Credenciais oficiais do seu projeto
 firebase.initializeApp({
     apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
     projectId: "agenda-4efa7",
@@ -11,9 +11,8 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Exibe a notificação mesmo se o celular estiver com a tela apagada
 messaging.onBackgroundMessage((payload) => {
-    console.log('Alarme recebido:', payload);
+    console.log('Alarme recebido em segundo plano:', payload);
     self.registration.showNotification(payload.notification.title, {
         body: payload.notification.body,
         icon: 'favicon.ico'
