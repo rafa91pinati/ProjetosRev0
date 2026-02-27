@@ -14,108 +14,81 @@
         </button>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
-            authDomain: "agenda-4efa7.firebaseapp.com",
-            projectId: "agenda-4efa7",
-            storageBucket: "agenda-4efa7.appspot.com",
-            messagingSenderId: "299659202964",
-            appId: "1:299659202964:web:e358210feb4d7784f63f81"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
+        authDomain: "agenda-4efa7.firebaseapp.com",
+        projectId: "agenda-4efa7",
+        storageBucket: "agenda-4efa7.appspot.com",
+        messagingSenderId: "299659202964",
+        appId: "1:299659202964:web:e358210feb4d7784f63f81"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const messaging = getMessaging(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const messaging = getMessaging(app);
 
-        const btn = document.getElementById('btnConectar');
-        const statusTxt = document.getElementById('status');
-        const msgTxt = document.getElementById('msg');
+    const btn = document.getElementById('btnConectar');
+    const statusTxt = document.getElementById('status');
+    const msgTxt = document.getElementById('msg');
 
-        // 1. INICIALIZAÇÃO PRIORITÁRIA: LOGIN ANÔNIMO
-        // Resolve o erro "missing authentication credential" garantindo o login na entrada.
-        signInAnonymously(auth).then(() => {
-            console.log("Login anônimo iniciado...");
-        }).catch(err => {
-            statusTxt.innerText = "ERRO DE ACESSO";
-            msgTxt.innerText = "Domínio não autorizado ou falha na rede.";
-        });
+    // 1. INICIAR CONEXIÓN AL CARGAR
+    signInAnonymously(auth).catch(err => {
+        statusTxt.innerText = "ERROR DE IDENTIDAD";
+        msgTxt.innerText = "Revise la conexión a internet.";
+    });
 
-        // 2. MONITOR DE CONEXÃO: SÓ ATIVA O BOTÃO QUANDO O LOGIN É CONFIRMADO
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                console.log("Usuário Validado:", user.uid);
-                statusTxt.innerText = "SISTEMA PRONTO";
-                msgTxt.innerText = "O Google validou sua identidade.";
-                btn.disabled = false;
-                btn.innerText = "ATIVAR ALARME AGORA";
-                btn.style.background = "#4CAF50";
-                btn.style.color = "white";
-                btn.style.cursor = "pointer";
+    // 2. SOLO HABILITA EL ALARMA CUANDO EL GOOGLE RESPONDE
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            statusTxt.innerText = "SISTEMA PRONTO";
+            msgTxt.innerText = "Google ha validado su acceso.";
+            btn.disabled = false;
+            btn.innerText = "ACTIVAR ALARMA AHORA";
+            btn.style.background = "#4CAF50";
+            btn.style.cursor = "pointer";
+        }
+    });
+
+    btn.onclick = async () => {
+        try {
+            btn.innerText = "CONECTANDO...";
+            btn.disabled = true;
+
+            const permission = await Notification.requestPermission();
+            if (permission !== "granted") throw new Error("Permiso denegado.");
+
+            // LIMPIEZA DE CACHÉ INTERNO (Clave para evitar el error 'missing credential')
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for(let reg of registrations) { await reg.unregister(); }
+
+            // Registro del nuevo servicio con la llave pública correcta
+            const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+            
+            const token = await getToken(messaging, { 
+                vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
+                serviceWorkerRegistration: reg
+            });
+
+            if (token) {
+                statusTxt.innerText = "ALARMA ACTIVADA";
+                msgTxt.innerText = "Conexión exitosa con el servidor.";
+                alert("¡ÉXITO! Alarma configurada.");
+                console.log("Token:", token);
             }
-        });
 
-        // 3. LÓGICA DE ATIVAÇÃO DO ALARME
-        btn.onclick = async () => {
-            try {
-                btn.innerText = "CONECTANDO...";
-                btn.disabled = true;
-
-                const permission = await Notification.requestPermission();
-                if (permission !== "granted") {
-                    throw new Error("Permissão de notificação negada.");
-                }
-
-                // LIMPEZA TÉCNICA: Remove registros velhos antes de tentar o novo
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for(let reg of registrations) { await reg.unregister(); }
-
-                // Registra o novo serviço
-                const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
-
-                // Tenta obter o token com a sua CHAVE PÚBLICA REAL (BDyyehg3...)
-                const token = await getToken(messaging, { 
-                    vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
-                    serviceWorkerRegistration: reg
-                });
-
-                if (token) {
-                    statusTxt.innerText = "SISTEMA ATIVADO!";
-                    msgTxt.innerText = "Conexão estabelecida com sucesso.";
-                    alert("SUCESSO! O alarme foi configurado.");
-                    console.log("Token:", token);
-                }
-
-            } catch (err) {
-                console.error("ERRO:", err);
-                statusTxt.innerText = "FALHA TÉCNICA";
-                msgTxt.innerText = "O Google pede para tentar novamente (limpe o cache).";
-                btn.disabled = false;
-                btn.innerText = "TENTAR NOVAMENTE";
-                btn.style.background = "#f44336";
-            }
-        };
-
-                if (token) {
-                    statusTxt.innerText = "SISTEMA ATIVADO!";
-                    msgTxt.innerText = "O alarme está conectado com sucesso.";
-                    alert("SUCESSO! O alarme foi configurado.");
-                    console.log("Token:", token);
-                }
-
-            } catch (err) {
-                console.error("ERRO:", err);
-                statusTxt.innerText = "FALHA TÉCNICA";
-                msgTxt.innerText = err.message;
-                btn.disabled = false;
-                btn.innerText = "TENTAR NOVAMENTE";
-                btn.style.background = "#f44336";
-            }
-        };
-    </script>
+        } catch (err) {
+            console.error(err);
+            statusTxt.innerText = "FALLA TÉCNICA";
+            msgTxt.innerText = "Intente limpiar el historial del navegador.";
+            btn.disabled = false;
+            btn.innerText = "REINTENTAR";
+        }
+    };
+</script>
 </body>
 </html>
