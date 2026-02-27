@@ -50,14 +50,16 @@
             if (permission !== "granted") throw new Error("Permissão negada");
 
             // 3. REGISTRO (Caminho relativo ./ para o GitHub Pages)
-            const reg = await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js');
-            await navigator.serviceWorker.ready;
+            const reg = await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', {
+  scope: '/ProjetosRev0/'
+});
+await navigator.serviceWorker.ready;
 
             // 4. GERAR TOKEN
             const token = await getToken(messaging, { 
-                vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
-                serviceWorkerRegistration: reg
-            });
+  vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
+  serviceWorkerRegistration: reg
+});
 
             if (token) {
                 statusTxt.innerText = "CONECTADO COM SUCESSO!";
