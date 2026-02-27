@@ -35,50 +35,51 @@
     const btn = document.getElementById('btnConectar');
     const statusTxt = document.getElementById('status');
 
-    // Libera o botão imediatamente para você poder agir
+    // DESTRAVA IMEDIATA: O botão começa ativo para você poder clicar
     statusTxt.innerText = "SISTEMA AGUARDANDO";
     btn.disabled = false;
-    btn.innerText = "CLIQUE PARA CONECTAR GOOGLE";
+    btn.innerText = "ATIVAR AGORA (FORÇAR)";
     btn.style.background = "#2196F3";
-    btn.style.color = "white";
     btn.style.cursor = "pointer";
 
     btn.onclick = async () => {
         try {
-            btn.innerText = "VALIDANDO...";
+            btn.innerText = "VALIDANDO GOOGLE...";
             btn.disabled = true;
 
-            // 1. LOGIN NA HORA DO CLIQUE (Resolve o erro de credencial ausente)
+            // 1. FORÇA O LOGIN NO MOMENTO DO CLIQUE
             const userCredential = await signInAnonymously(auth);
-            console.log("Validado com ID:", userCredential.user.uid);
+            console.log("Usuário autenticado:", userCredential.user.uid);
 
-            // 2. PEDIR PERMISSÃO
+            // 2. PEDE PERMISSÃO DE NOTIFICAÇÃO
             const permission = await Notification.requestPermission();
-            if (permission !== "granted") throw new Error("Permissão de alarme negada.");
+            if (permission !== "granted") throw new Error("Permissão negada pelo navegador.");
 
-            // 3. REGISTRAR SERVIÇO (Caminho da sua pasta no GitHub)
-            const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+            // 3. REGISTRA O SERVIÇO NA PASTA CORRETA
+            const reg = await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', {
+                scope: '/ProjetosRev0/'
+            });
 
-            // 4. GERAR TOKEN COM A CHAVE PÚBLICA (BDyyehg3...)
+            // 4. GERA O TOKEN COM A CHAVE REAL DO SEU PRINT
             const token = await getToken(messaging, { 
                 vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
                 serviceWorkerRegistration: reg
             });
 
             if (token) {
-                statusTxt.innerText = "SISTEMA ATIVADO!";
-                btn.innerText = "CONECTADO COM SUCESSO";
+                statusTxt.innerText = "SISTEMA CONECTADO!";
+                btn.innerText = "ALARME ATIVADO COM SUCESSO";
                 btn.style.background = "#4CAF50";
-                alert("SUCESSO! Alarme pronto para tocar.");
-                console.log("Token:", token);
+                alert("SUCESSO! A ponte com o Google foi estabelecida.");
             }
+
         } catch (err) {
-            console.error(err);
-            statusTxt.innerText = "FALHA NA CONEXÃO";
+            console.error("FALHA:", err);
+            statusTxt.innerText = "ERRO DE SINCRONIA";
             btn.disabled = false;
             btn.innerText = "TENTAR NOVAMENTE";
             btn.style.background = "#f44336";
-            alert("Erro Técnico: " + err.message);
+            alert("Erro: " + err.message);
         }
     };
 </script>
