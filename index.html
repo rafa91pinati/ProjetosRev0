@@ -113,18 +113,26 @@
     };
 
     window.solicitarNotificacao = async () => {
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-            try {
-                await signInAnonymously(auth);
-                const token = await getToken(messaging, { 
-                    vapidKey: 'I_waKJL3y7utz-8A8U3rxj863fQqUKf6MsiROfKbesw' 
-                });
-                alert("Alarme ativado com sucesso!");
-                console.log("Token:", token);
-            } catch (err) { alert("Erro de autenticação no Firebase."); }
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+        try {
+            // Isso resolve o erro das suas imagens
+            await signInAnonymously(auth); 
+            
+            const token = await getToken(messaging, { 
+                vapidKey: 'BKj4JLMSHmF3LHBQNU-NKVdlIaLBnhOow5qF5BqbTDssWgEM5R-g9v7hujX8iUC_bmEq5SligyEA53wo_cx8HUE' 
+            });
+            
+            alert("Alarme ativado com sucesso!");
+            console.log("Token gerado:", token);
+        } catch (err) { 
+            console.error("Erro detalhado:", err);
+            alert("Falha na autenticação. Verifique se o provedor 'Anônimo' está ativo no Firebase."); 
         }
-    };
+    } else {
+        alert("Você precisa permitir as notificações no seu navegador.");
+    }
+};
 
     window.setarData = (tipo, el) => {
         const input = document.getElementById('dataSeletor');
