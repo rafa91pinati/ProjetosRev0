@@ -11,8 +11,18 @@
         
         .timeline-header { display: flex; gap: 8px; margin-bottom: 15px; align-items: center; overflow-x: auto; padding-bottom: 5px; }
         .btn-date { flex: 0 0 auto; min-width: 70px; padding: 10px; border-radius: 10px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.8em; font-weight: bold; transition: 0.3s; }
-        .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
-        #dataSeletor { flex: 1; padding: 8px; border-radius: 10px; border: 1px solid #ddd; min-width: 110px; }
+        .btn-date { 
+    flex: 1; /* Mude de '0 0 auto' para '1' para permitir que cresçam e diminuam */
+    min-width: 60px; /* Reduza um pouco para caber melhor em telas estreitas */
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.8em;
+    font-weight: bold;
+    transition: 0.3s;
+}
         .btn-config { background: none; border: none; font-size: 1.5em; cursor: pointer; padding: 0 5px; flex-shrink: 0; }
 
         .category-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
@@ -39,6 +49,26 @@
         
         /* Botão flutuante de instalação */
         #btnInstalarApp { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; background: #2196F3; color: white; border: none; padding: 15px 25px; border-radius: 30px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none; }
+		
+		.timeline-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    align-items: center;
+    overflow-x: auto; /* Pode manter isso se preferir o scroll lateral, mas o wrap ajuda */
+    padding-bottom: 5px;
+    flex-wrap: wrap; /* ADICIONE ESTA LINHA */
+}
+
+#dataSeletor {
+    flex: 1; /* Mantenha '1' para ele ser flexível */
+    padding: 8px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    min-width: 100px; /* Defina uma largura mínima razoável */
+}
+
+
     </style>
 </head>
 <body>
