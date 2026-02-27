@@ -37,27 +37,48 @@
     const statusTxt = document.getElementById('status');
 
     btn.onclick = async () => {
-        try {
-            btn.innerText = "SINCRONIZANDO...";
-            btn.disabled = true;
+    try {
+        btn.innerText = "SINCRONIZANDO...";
+        btn.disabled = true;
 
-            // 1. LOGIN FORÇADO (Resolve erro de credencial ausente)
-            const userCredential = await signInAnonymously(auth);
-            // Garante um Token de Identidade novo para o Google Cloud Messaging
-            await userCredential.user.getIdToken(true); 
+        // 1️⃣ LOGIN ANÔNIMO
+        const userCredential = await signInAnonymously(auth);
+        await userCredential.user.getIdToken(true);
 
-            // Pequena pausa para o navegador "digerir" o novo login
-            await new Promise(r => setTimeout(r, 1500));
+        // 2️⃣ PEDIR PERMISSÃO DE NOTIFICAÇÃO (ITEM 5)
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") {
+            throw new Error("Permissão de notificação negada");
+        }
 
-            // 2. REGISTRO E ESPERA
-            const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js', { scope: '/ProjetosRev0/' });
-            await navigator.serviceWorker.ready;
+        // 3️⃣ REGISTRAR SERVICE WORKER CORRETAMENTE (ITEM 3)
+        const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        await navigator.serviceWorker.ready;
 
-            // 3. GERA O TOKEN (Sua chave VAPID BDyyehg3...)
-            const token = await getToken(messaging, { 
-                vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
-                serviceWorkerRegistration: reg
-            });
+        // 4️⃣ GERAR TOKEN
+        const token = await getToken(messaging, { 
+            vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
+            serviceWorkerRegistration: reg
+        });
+
+        if (token) {
+            statusTxt.innerText = "CONECTADO COM SUCESSO!";
+            btn.style.background = "#4CAF50";
+            btn.innerText = "CONEXÃO ATIVA";
+            alert("SUCESSO! Alarme pronto para uso.");
+            console.log("Seu Token:", token);
+        } else {
+            throw new Error("Token não foi gerado");
+        }
+
+    } catch (err) {
+        console.error(err);
+        statusTxt.innerText = "FALHA TÉCNICA";
+        alert("Erro: " + err.message);
+        btn.disabled = false;
+        btn.innerText = "TENTAR NOVAMENTE";
+    }
+};
 
             if (token) {
                 statusTxt.innerText = "CONECTADO COM SUCESSO!";
