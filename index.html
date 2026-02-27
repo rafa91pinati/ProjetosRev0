@@ -9,23 +9,37 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
         .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         
-        .timeline-header { display: grid; grid-template-columns: 0.8fr 0.8fr 0.8fr 2fr auto; gap: 5px; margin-bottom: 15px; align-items: center; }
-        .btn-date { width: 100%; padding: 10px 0; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-align: center; }
+        /* CABEÇALHO GRID */
+        .timeline-header { 
+            display: grid; 
+            grid-template-columns: 0.8fr 0.8fr 0.8fr 2fr auto; 
+            gap: 5px; 
+            margin-bottom: 15px; 
+            align-items: center; 
+        }
+        .btn-date { width: 100%; padding: 10px 0; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
         .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
-        #dataSeletor { width: 100%; padding: 8px 5px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.85rem; height: 40px; box-sizing: border-box; }
+        #dataSeletor { width: 100%; padding: 8px 5px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.85rem; height: 40px; }
+        
+        /* BOTÃO CONFIGURAÇÃO (VOLTOU) */
         .btn-config { background: none; border: none; font-size: 1.3em; cursor: pointer; padding: 0 5px; }
 
         .category-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
         .btn-cat { white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd; background: #f9f9f9; cursor: pointer; font-size: 0.85em; }
-        .btn-cat.ativo { background: #333; color: white; border-color: #333; }
+        .btn-cat.ativo { background: #333; color: white; }
 
         .secao-card { background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
         input[type="text"], input[type="time"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         #btnSalvar { background: #4CAF50; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
         
-        .tarefa-item { background: #fff; margin-bottom: 12px; padding: 15px; border-radius: 12px; border-left: 6px solid #2196F3; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; transition: opacity 0.3s; }
-        .btn-excluir { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #aaa; font-size: 1.2em; cursor: pointer; }
-        img { max-width: 100%; border-radius: 10px; margin-top: 10px; display: block; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .tarefa-item { background: #fff; margin-bottom: 10px; padding: 12px; border-radius: 10px; border-left: 6px solid #2196F3; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
+        .btn-excluir { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #ff4d4d; cursor: pointer; }
+        img { max-width: 100%; border-radius: 8px; margin-top: 10px; display: block; }
+
+        /* MODAL */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .escondido { display: none !important; }
+        .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; }
     </style>
 </head>
 <body>
@@ -36,7 +50,7 @@
         <button class="btn-date" id="btnHoje" onclick="setarData('hoje', this)">Hoje</button>
         <button class="btn-date" id="btnAmanha" onclick="setarData('amanha', this)">Amanhã</button>
         <input type="date" id="dataSeletor" onchange="setarData('custom', this)">
-        <button class="btn-config" onclick="location.reload(true)">🔄</button>
+        <button class="btn-config" onclick="abrirConfig()">⚙️</button>
     </div>
 
     <div class="category-scroll" id="listaBotoesCat"></div>
@@ -47,30 +61,35 @@
         <input type="text" id="descTask" placeholder="O que vamos fazer?">
         <div style="display: flex; gap: 8px;">
             <input type="time" id="horaTask" style="flex: 1;">
-            <input type="file" id="fotoTask" accept="image/*" style="flex: 1.5; font-size: 0.75em; align-self: center;">
+            <input type="file" id="fotoTask" accept="image/*" style="flex: 1.5; font-size: 0.7em; align-self: center;">
         </div>
         <button id="btnSalvar">Salvar Tudo</button>
     </div>
 
     <div id="secaoLista">
-        <div id="listaTarefas">Sincronizando...</div>
+        <div id="listaTarefas">Carregando...</div>
+    </div>
+</div>
+
+<div id="modalConfig" class="modal escondido">
+    <div class="modal-content">
+        <button onclick="fecharConfig()" style="float:right; border:none; background:none; font-size:1.2em; cursor:pointer;">✕</button>
+        <h4>Configurações</h4>
+        <button onclick="location.reload(true)" style="width:100%; padding:10px; background:#2196F3; color:white; border:none; border-radius:8px; margin-bottom:10px;">Forçar Atualização</button>
+        <button onclick="solicitarNotificacao()" style="width:100%; padding:10px; background:#4CAF50; color:white; border:none; border-radius:8px;">Ativar Alarme</button>
     </div>
 </div>
 
 <script type="module">
-    // --- GERENCIAMENTO DE VERSÃO E CACHE ---
-    const VERSAO_APP = "2.1"; 
-
-    async function checkVersion() {
-        if (localStorage.getItem('app_version') !== VERSAO_APP) {
-            if ('caches' in window) {
-                const names = await caches.keys();
-                for (let name of names) await caches.delete(name);
-            }
-            localStorage.setItem('app_version', VERSAO_APP);
-            setTimeout(() => window.location.reload(), 500);
+    // --- MACRO DE ATUALIZAÇÃO AUTOMÁTICA AO ABRIR ---
+    window.onload = () => {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(regs => {
+                for(let reg of regs) reg.update(); // Força o SW a buscar novidades no GitHub
+            });
         }
-    }
+        console.log("App iniciado e sincronizado com o servidor.");
+    };
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
@@ -89,126 +108,89 @@
 
     let filtroDataAtual = 'hoje';
 
-    const comprimirFoto = (file) => {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const larguraMax = 600;
-                    const proporcao = larguraMax / img.width;
-                    canvas.width = larguraMax;
-                    canvas.height = img.height * proporcao;
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.6));
-                };
-            };
-        });
-    };
-
-    window.selecionarCat = (nome, cor, el) => {
-        document.querySelectorAll('.btn-cat').forEach(b => b.classList.remove('ativo'));
-        if(el) el.classList.add('ativo');
-        document.getElementById('categoriaSelecionada').value = nome;
-        document.getElementById('corSelecionada').value = cor;
-        carregarTarefas();
-    };
-
-    async function carregarCategorias() {
-        const container = document.getElementById('listaBotoesCat');
-        try {
-            const snap = await getDocs(collection(db, "categorias"));
-            container.innerHTML = `<button class="btn-cat ativo" onclick="selecionarCat('Geral', '#4CAF50', this)">Geral</button>`;
-            snap.forEach(d => {
-                const c = d.data();
-                container.innerHTML += `<button class="btn-cat" style="border-bottom: 3px solid ${c.cor}" onclick="selecionarCat('${c.nome}', '${c.cor}', this)">${c.nome}</button>`;
-            });
-        } catch(e) { console.error(e); }
-    }
+    // FUNÇÕES DE INTERFACE
+    window.abrirConfig = () => document.getElementById('modalConfig').classList.remove('escondido');
+    window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
 
     async function carregarTarefas() {
         const lista = document.getElementById('listaTarefas');
         const dataFiltro = document.getElementById('dataSeletor').value;
         const catFiltro = document.getElementById('categoriaSelecionada').value;
-        lista.style.opacity = "0.5";
-
+        
         try {
             const q = query(collection(db, "tarefas"), orderBy("hora", "asc"));
             const snap = await getDocs(q);
-            let html = "";
+            lista.innerHTML = "";
+            let encontrou = false;
+
             snap.forEach(d => {
                 const t = d.data();
                 if (catFiltro !== "Geral" && t.categoria !== catFiltro) return;
                 if (filtroDataAtual !== 'semanal' && t.dataString !== dataFiltro) return;
+                
+                encontrou = true;
                 const cor = t.corCategoria || "#2196F3";
-                html += `
+                lista.innerHTML += `
                     <div class="tarefa-item" style="border-left-color: ${cor}">
                         <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
                         <small style="color:${cor}; font-weight:bold">${t.categoria || 'Geral'}</small>
                         <span style="float:right; font-size:0.85em;">⏰ ${t.hora || '--:--'}</span>
                         <p style="margin:8px 0;">${t.descricao}</p>
-                        ${t.fotoUrl ? `<img src="${t.fotoUrl}" loading="lazy">` : ""}
+                        ${t.fotoUrl ? `<img src="${t.fotoUrl}">` : ""}
                     </div>`;
             });
-            lista.innerHTML = html || "<p style='text-align:center;color:#999;'>Nenhuma atividade.</p>";
-        } catch (e) { lista.innerHTML = "Erro ao carregar."; }
-        lista.style.opacity = "1";
+            if(!encontrou) lista.innerHTML = "<p style='text-align:center;color:#999;'>Nada agendado.</p>";
+        } catch (e) { lista.innerHTML = "Erro ao carregar banco."; }
+    }
+
+    async function carregarCategorias() {
+        const container = document.getElementById('listaBotoesCat');
+        const snap = await getDocs(collection(db, "categorias"));
+        container.innerHTML = `<button class="btn-cat ativo" onclick="selecionarCat('Geral', '#4CAF50', this)">Geral</button>`;
+        snap.forEach(d => {
+            const c = d.data();
+            container.innerHTML += `<button class="btn-cat" style="border-bottom: 3px solid ${c.cor}" onclick="selecionarCat('${c.nome}', '${c.cor}', this)">${c.nome}</button>`;
+        });
     }
 
     document.getElementById('btnSalvar').onclick = async () => {
         const desc = document.getElementById('descTask').value;
         const hora = document.getElementById('horaTask').value;
         const data = document.getElementById('dataSeletor').value;
-        const fileInput = document.getElementById('fotoTask');
-        if(!desc) return alert("Digite a tarefa!");
-
-        const btn = document.getElementById('btnSalvar');
-        btn.innerText = "Salvando..."; btn.disabled = true;
+        if(!desc || !data) return alert("Preencha descrição e data!");
 
         try {
-            let base64 = fileInput.files[0] ? await comprimirFoto(fileInput.files[0]) : "";
             await addDoc(collection(db, "tarefas"), {
                 descricao: desc, hora: hora, dataString: data,
                 categoria: document.getElementById('categoriaSelecionada').value,
                 corCategoria: document.getElementById('corSelecionada').value,
-                fotoUrl: base64, dataCriacao: new Date()
+                dataCriacao: new Date()
             });
             document.getElementById('descTask').value = "";
-            fileInput.value = "";
             carregarTarefas();
         } catch (e) { alert("Erro ao salvar!"); }
-        btn.innerText = "Salvar Tudo"; btn.disabled = false;
     };
 
     window.setarData = (tipo, el) => {
         const input = document.getElementById('dataSeletor');
         document.querySelectorAll('.btn-date').forEach(b => b.classList.remove('ativo'));
-        if (tipo === 'hoje') { 
-            input.value = new Date().toISOString().split('T')[0]; 
-            if(el) el.classList.add('ativo'); 
-            filtroDataAtual = 'hoje'; 
-        }
-        else if (tipo === 'amanha') { 
-            const am = new Date(); am.setDate(am.getDate()+1); 
-            input.value = am.toISOString().split('T')[0]; 
-            if(el) el.classList.add('ativo'); 
-            filtroDataAtual = 'amanha'; 
-        }
-        else if (tipo === 'semanal') { 
-            if(el) el.classList.add('ativo'); 
-            filtroDataAtual = 'semanal'; 
-        }
+        if (tipo === 'hoje') { input.value = new Date().toISOString().split('T')[0]; el.classList.add('ativo'); filtroDataAtual = 'hoje'; }
+        else if (tipo === 'amanha') { const am = new Date(); am.setDate(am.getDate()+1); input.value = am.toISOString().split('T')[0]; el.classList.add('ativo'); filtroDataAtual = 'amanha'; }
+        else if (tipo === 'semanal') { el.classList.add('ativo'); filtroDataAtual = 'semanal'; }
+        carregarTarefas();
+    };
+
+    window.selecionarCat = (nome, cor, el) => {
+        document.querySelectorAll('.btn-cat').forEach(b => b.classList.remove('ativo'));
+        el.classList.add('ativo');
+        document.getElementById('categoriaSelecionada').value = nome;
+        document.getElementById('corSelecionada').value = cor;
         carregarTarefas();
     };
 
     window.excluirTask = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
 
     // INICIAR
-    checkVersion();
     setarData('hoje', document.getElementById('btnHoje'));
     carregarCategorias();
 </script>
