@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Agenda</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2, h3 { text-align: center; color: #333; margin: 10px 0; }
+        input, button { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background-color: #45a049; }
+        .tarefa-item { background: #fff; margin: 10px 0; padding: 15px; border-left: 5px solid #4CAF50; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; }
+        .tag { font-size: 0.75em; color: white; padding: 3px 8px; border-radius: 12px; margin-left: 10px; vertical-align: middle; }
+        
+        .secao-header { cursor: pointer; user-select: none; display: flex; justify-content: center; align-items: center; }
+        .seta { display: inline-block; margin-left: 10px; transition: transform 0.3s ease; font-size: 0.8em; color: #888; }
+        .seta-fechada { transform: rotate(-90deg); }
+        .escondido { display: none; }
+
+        .btn-cat { background-color: #f0f0f0; color: #333; border: 2px solid #ddd; padding: 8px 15px; border-radius: 20px; cursor: pointer; width: auto !important; margin: 5px 2px; transition: 0.3s; }
+        .btn-cat.ativo { background-color: #333; color: white; border-color: #333; font-weight: bold; }
+        
+        img { max-width: 100%; border-radius: 8px; margin-top: 10px; display: block; }
+        .btn-excluir { position: absolute; right: 10px; top: 10px; background: none; color: #ff4d4d; width: auto; padding: 5px; margin: 0; font-size: 1.2em; border:none; cursor:pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="secao-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;" onclick="toggleSecao('formTarefa', 'setaForm')">
+        <h2 style="margin: 0;">📅 Tarefa <span id="setaForm" class="seta">▼</span></h2>
+        <input type="date" id="dataSeletor" onclick="event.stopPropagation()" style="width: auto; padding: 5px; border-radius: 5px; border: 1px solid #ccc; cursor: pointer;">
+    </div>
+    
+    <div id="formTarefa" class="secao-conteudo">
+        <div id="secaoCategorias" style="margin-bottom: 20px; text-align: left;">
+    <div id="listaBotoesCat" style="display: flex; gap: 8px; justify-content: flex-start; flex-wrap: wrap; align-items: center;">
+        </div>
+    
+    <input type="hidden" id="categoriaSelecionada" value="Geral">
+    <input type="hidden" id="corSelecionada" value="#4CAF50">
+</div>
+
+        <div id="containerAtividades">
+            <div class="par-atividade" style="border-bottom: 1px dashed #ccc; padding: 10px 0; display: flex; align-items: center; gap: 10px; position: relative;">
+                <input type="text" class="desc-input" placeholder="Atividade 1" style="flex: 1;">
+                <input type="file" class="foto-input" accept="image/*" style="width: auto;">
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button id="btnAddCampo" style="background-color: #2196F3; flex: 1; margin: 0;">+ ADD tarefa</button>
+            <button id="btnSalvar" style="background-color: #4CAF50; flex: 1; margin: 0;">Salvar Tudo</button>
+        </div>
+    </div>
+
+    <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
+
+    <div class="secao-header" onclick="toggleSecao('secaoLista', 'setaLista')">
+        <h3>📋 Minhas Tarefas <span id="setaLista" class="seta">▼</span></h3>
+    </div>
+    
+    <div id="secaoLista" class="secao-conteudo">
+        <div id="listaTarefas">Carregando tarefas...</div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
+        authDomain: "agenda-4efa7.firebaseapp.com",
+        projectId: "agenda-4efa7",
+        storageBucket: "agenda-4efa7.appspot.com",
+        messagingSenderId: "299659202964",
+        appId: "1:299659202964:web:e358210feb4d7784f63f81",
+        measurementId: "G-PGBEQYD02B"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // --- FUNÇÕES DE CATEGORIA ---
+
+    function gerarCorAleatoria() {
+        const h = Math.floor(Math.random() * 360);
+        return `hsl(${h}, 70%, 45%)`;
+    }
+
+    // Janela de digitação para nova categoria
+    window.promptNovaCategoria = async function() {
+        const nome = prompt("Digite o nome da nova categoria:");
+        if (nome && nome.trim() !== "") {
+            const cor = gerarCorAleatoria();
+            try {
+                await addDoc(collection(db, "categorias"), { 
+                    nome: nome.trim(), 
+                    cor: cor,
+                    criadoEm: new Date() 
+                });
+                carregarCategorias();
+            } catch (e) { console.error("Erro ao salvar categoria:", e); }
+        }
+    };
+
+    window.selecionarCat = (nome, cor, elemento) => {
+        document.querySelectorAll('.btn-cat').forEach(b => b.classList.remove('ativo'));
+        elemento.classList.add('ativo');
+        document.getElementById('categoriaSelecionada').value = nome;
+        document.getElementById('corSelecionada').value = cor;
+    };
+
+    async function carregarCategorias() {
+        const container = document.getElementById('listaBotoesCat');
+        if (!container) return;
+        try {
+            const q = query(collection(db, "categorias"), orderBy("criadoEm", "asc"));
+            const snap = await getDocs(q);
+            
+            // Botão Padrão + Categorias do Banco + Botão azul "+"
+            container.innerHTML = `<button type="button" class="btn-cat ativo" style="border-bottom: 4px solid #4CAF50" onclick="selecionarCat('Geral', '#4CAF50', this)">Geral</button>`;
+            
+            snap.forEach(d => {
+                const cat = d.data();
+                container.innerHTML += `<button type="button" class="btn-cat" style="border-bottom: 4px solid ${cat.cor}" onclick="selecionarCat('${cat.nome}', '${cat.cor}', this)">${cat.nome}</button>`;
+            });
+
+            // Adiciona o "+" redondo ao final
+            container.innerHTML += `
+                <button type="button" onclick="promptNovaCategoria()" style="width: 32px; height: 32px; border-radius: 50%; background-color: #2196F3; color: white; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 5px; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                    +
+                </button>`;
+        } catch (e) { console.error(e); }
+    }
+
+    // --- FUNÇÕES GERAIS ---
+
+    window.toggleSecao = (idC, idS) => {
+        document.getElementById(idC).classList.toggle('escondido');
+        document.getElementById(idS).classList.toggle('seta-fechada');
+    };
+
+    window.excluirTarefa = async (id) => {
+        if (confirm("Deseja excluir esta tarefa?")) {
+            await deleteDoc(doc(db, "tarefas", id));
+            carregarTarefas();
+        }
+    };
+
+    const converterParaBase64 = (arquivo) => {
+        return new Promise((resolve, reject) => {
+            const leitor = new FileReader();
+            leitor.readAsDataURL(arquivo);
+            leitor.onload = () => resolve(leitor.result);
+            leitor.onerror = (e) => reject(e);
+        });
+    };
+
+    async function carregarTarefas() {
+        const lista = document.getElementById('listaTarefas');
+        try {
+            const q = query(collection(db, "tarefas"));
+            const snap = await getDocs(q);
+            lista.innerHTML = "";
+            if (snap.empty) { lista.innerHTML = "<p>Nenhuma tarefa encontrada.</p>"; return; }
+            snap.forEach(d => {
+                const t = d.data();
+                const corCard = t.corCategoria || "#ccc"; 
+                lista.innerHTML += `
+                    <div class="tarefa-item" style="border-left: 5px solid ${corCard}; background-color: ${corCard}15;">
+                        <button class="btn-excluir" onclick="excluirTarefa('${d.id}')">🗑️</button>
+                        <strong>${t.dia || '??'} de ${t.mes || '??'}</strong> 
+                        <span class="tag" style="background-color: ${corCard}">${t.categoria}</span>
+                        <p style="margin-top: 10px;">${t.descricao}</p>
+                        ${t.fotoUrl ? `<img src="${t.fotoUrl}">` : ""}
+                    </div>`;
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    // --- EVENTOS ---
+
+    document.getElementById('btnAddCampo').addEventListener('click', () => {
+        const div = document.createElement('div');
+        div.className = 'par-atividade';
+        div.style = "border-bottom: 1px dashed #ccc; padding: 10px 0; display: flex; align-items: center; gap: 10px; position: relative;";
+        div.innerHTML = `<input type="text" class="desc-input" placeholder="Nova atividade" style="flex: 1;"><input type="file" class="foto-input" accept="image/*" style="width: auto;"><span onclick="this.parentElement.remove()" style="cursor:pointer; color:red; font-weight:bold; padding: 5px;">✖</span>`;
+        document.getElementById('containerAtividades').appendChild(div);
+    });
+
+    document.getElementById('btnSalvar').addEventListener('click', async () => {
+        const btn = document.getElementById('btnSalvar');
+        const dataVal = document.getElementById('dataSeletor').value;
+        if (!dataVal) return alert("Selecione a data!");
+        
+        const partes = dataVal.split('-');
+        const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const dia = partes[2];
+        const mes = meses[parseInt(partes[1]) - 1];
+        
+        btn.disabled = true; btn.innerText = "Salvando...";
+        const descs = document.querySelectorAll('.desc-input');
+        const fotos = document.querySelectorAll('.foto-input');
+
+        try {
+            for (let i = 0; i < descs.length; i++) {
+                if (descs[i].value) {
+                    let img = "";
+                    if (fotos[i].files[0]) img = await converterParaBase64(fotos[i].files[0]);
+                    const catFinal = document.getElementById('categoriaSelecionada').value;
+                    const corFinal = document.getElementById('corSelecionada').value;
+                    await addDoc(collection(db, "tarefas"), {
+                        dia, mes, categoria: catFinal, corCategoria: corFinal,
+                        descricao: descs[i].value, fotoUrl: img, dataCriacao: new Date()
+                    });
+                }
+            }
+            alert("Salvo com sucesso!");
+            location.reload();
+        } catch (e) { alert("Erro ao salvar."); btn.disabled = false; }
+    });
+
+    // Início
+    const hoje = new Date();
+    document.getElementById('dataSeletor').value = hoje.toISOString().split('T')[0];
+    carregarCategorias();
+    carregarTarefas();
+</script>
+</body>
+</html>
