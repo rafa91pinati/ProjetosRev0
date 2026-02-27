@@ -1,77 +1,158 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
-    <title>Teste de Conexão Alarme</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minha Agenda Inteligente</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
+        /* Ajuste Vermelho: Cabeçalho Alinhado */
+        .timeline-header { display: flex; gap: 5px; margin-bottom: 15px; align-items: stretch; height: 42px; }
+        .btn-date { flex: 1; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.65rem; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center; }
+        .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
+        #dataSeletor { flex: 2.5; padding: 0 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.85rem; height: 100%; box-sizing: border-box; }
+        .btn-config { background: none; border: none; font-size: 1.3em; cursor: pointer; display: flex; align-items: center; padding: 0 5px; }
+
+        /* Ajuste Azul: Títulos de Sessão */
+        .header-secao { border-left: 5px solid #2196F3; padding-left: 10px; margin: 20px 0 10px; color: #2196F3; font-size: 1rem; font-weight: bold; text-transform: uppercase; }
+
+        .category-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
+        .btn-cat { white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd; background: #f9f9f9; cursor: pointer; font-size: 0.85em; }
+        .btn-cat.ativo { background: #333; color: white; }
+        
+        .secao-card { background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
+        input[type="text"], input[type="time"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        #btnSalvar { background: #4CAF50; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
+        
+        /* Ajuste Verde: Card de Atividade Organizado */
+        .tarefa-item { background: #fff; margin-bottom: 12px; padding: 15px; border-radius: 12px; border-left: 6px solid #2196F3; box-shadow: 0 3px 6px rgba(0,0,0,0.08); position: relative; }
+        .tarefa-info-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .btn-excluir { background: #fff0f0; border: none; color: #ff4d4d; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .tarefa-desc { margin: 10px 0; font-size: 0.95rem; color: #333; font-weight: 500; }
+        .tarefa-hora { font-size: 0.85rem; color: #2196F3; font-weight: bold; display: flex; align-items: center; gap: 5px; background: #e3f2fd; padding: 4px 10px; border-radius: 6px; width: fit-content; }
+
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .escondido { display: none !important; }
+        .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; position: relative; }
+    </style>
 </head>
 <body>
-    <h1>Teste de Notificação</h1>
-    <p>Status: <span id="status">Aguardando...</span></p>
-    <button id="btnConectar" style="padding: 20px; font-size: 20px;">ATIVAR ALARME AGORA</button>
 
-    <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+<div class="container">
+    <div class="timeline-header">
+        <button class="btn-date" id="btnHoje" onclick="setarData('hoje', this)">Hoje</button>
+        <input type="date" id="dataSeletor" onchange="carregarTarefas()">
+        <button class="btn-config" onclick="abrirConfig()">⚙️</button>
+    </div>
 
-const firebaseConfig = {
-    apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
-    authDomain: "agenda-4efa7.firebaseapp.com",
-    projectId: "agenda-4efa7",
-    storageBucket: "agenda-4efa7.appspot.com",
-    messagingSenderId: "299659202964",
-    appId: "1:299659202964:web:e358210feb4d7784f63f81"
-};
+    <div class="header-secao">📝 Nova Tarefa</div>
+    <div class="secao-card">
+        <input type="text" id="descTask" placeholder="O que vamos fazer?">
+        <input type="time" id="horaTask">
+        <button id="btnSalvar">Salvar Tudo</button>
+    </div>
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const messaging = getMessaging(app);
+    <div class="header-secao">📅 Minhas Atividades</div>
+    <div id="listaTarefas">Sincronizando...</div>
+</div>
 
-// CHAVE PÚBLICA EXATA DO SEU PRINT
-const CHAVE_VAPID_PUBLICA = "BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8";
+<div id="modalConfig" class="modal escondido">
+    <div class="modal-content">
+        <button onclick="fecharConfig()" style="position: absolute; right: 15px; top: 15px; border:none; background:none; font-size:1.2em;">✕</button>
+        <h4>Configurar Alarme</h4>
+        <button id="btnAtivarAlarme" style="width:100%; padding:12px; background:#2196F3; color:white; border:none; border-radius:8px;">Ativar Alarme</button>
+    </div>
+</div>
 
-window.solicitarNotificacao = async () => {
-    try {
-        const permission = await Notification.requestPermission();
-        if (permission !== "granted") {
-            alert("Você precisa permitir as notificações no navegador.");
-            return;
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+    import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
+        authDomain: "agenda-4efa7.firebaseapp.com",
+        projectId: "agenda-4efa7",
+        storageBucket: "agenda-4efa7.appspot.com",
+        messagingSenderId: "299659202964",
+        appId: "1:299659202964:web:e358210feb4d7784f63f81"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const messaging = getMessaging(app);
+    const db = getFirestore(app);
+
+    // CHAVE PÚBLICA DO SEU PRINT
+    const PUBLIC_VAPID_KEY = 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8';
+
+    // Garante que o usuário está logado ANTES de qualquer ação de alarme
+    signInAnonymously(auth).catch(e => console.error("Erro no login anônimo", e));
+
+    document.getElementById('btnAtivarAlarme').onclick = async () => {
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission !== "granted") return alert("Permita as notificações.");
+
+            // Espera o login anônimo ser confirmado pelo Firebase
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    console.log("Usuário autenticado:", user.uid);
+                    
+                    // Registro manual do Service Worker para evitar 404 no GitHub subfolder
+                    const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+                    
+                    const token = await getToken(messaging, { 
+                        vapidKey: PUBLIC_VAPID_KEY,
+                        serviceWorkerRegistration: registration
+                    });
+
+                    if (token) {
+                        alert("CONECTADO COM SUCESSO!");
+                        console.log("Token:", token);
+                    }
+                } else {
+                    alert("Aguardando autenticação...");
+                }
+            });
+        } catch (err) {
+            alert("Erro: " + err.message);
         }
+    };
 
-        // 1. FORÇAR O LOGIN ANÔNIMO E ESPERAR (Resolve 'missing credential')
-        console.log("Autenticando...");
-        const userCredential = await signInAnonymously(auth);
-        console.log("Usuário autenticado:", userCredential.user.uid);
+    window.abrirConfig = () => document.getElementById('modalConfig').classList.remove('escondido');
+    window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
+    window.setarData = (tipo) => {
+        if (tipo === 'hoje') document.getElementById('dataSeletor').value = new Date().toISOString().split('T')[0];
+        carregarTarefas();
+    };
 
-        // 2. REGISTRAR O SERVICE WORKER NA PASTA DO GITHUB (Resolve 404)
-        const registration = await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', {
-            scope: '/ProjetosRev0/'
+    window.carregarTarefas = async () => {
+        const lista = document.getElementById('listaTarefas'), data = document.getElementById('dataSeletor').value;
+        if(!data) return;
+        const q = query(collection(db, "tarefas"), orderBy("hora", "asc"));
+        const snap = await getDocs(q);
+        lista.innerHTML = "";
+        snap.forEach(d => {
+            const t = d.data();
+            if (t.dataString === data) {
+                lista.innerHTML += `
+                    <div class="tarefa-item">
+                        <div class="tarefa-info-top">
+                            <div class="tarefa-hora">⏰ ${t.hora}</div>
+                            <button class="btn-excluir">🗑️</button>
+                        </div>
+                        <div class="tarefa-desc">${t.descricao}</div>
+                    </div>`;
+            }
         });
-        console.log("Service Worker registrado na pasta ProjetosRev0");
+    };
 
-        // 3. OBTER TOKEN USANDO A CHAVE DO SEU PRINT
-        const token = await getToken(messaging, { 
-            vapidKey: CHAVE_VAPID_PUBLICA,
-            serviceWorkerRegistration: registration
-        });
-
-        if (token) {
-            console.log("SUCESSO! Token obtido:", token);
-            alert("Alarme conectado com sucesso!");
-        } else {
-            alert("Não foi possível gerar o token. Tente novamente.");
-        }
-
-    } catch (err) {
-        console.error("ERRO DETALHADO:", err);
-        // Tratamento específico para o erro de chave inválida
-        if (err.message.includes("applicationServerKey")) {
-            alert("Erro na Chave VAPID. Verifique se não há espaços extras.");
-        } else {
-            alert("Falha na conexão: " + err.message);
-        }
-    }
-};
-    </script>
+    window.setarData('hoje');
+</script>
 </body>
 </html>
