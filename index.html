@@ -1,82 +1,97 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <link rel="manifest" href="manifest.json">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Base de Validação - Agenda</title>
+  <link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Base de Validação - Agenda</title>
 </head>
+
 <body style="font-family: sans-serif; text-align: center; padding: 40px;">
+  <h1 id="status">SISTEMA VALIDADO</h1>
+  <p id="detalhes">Clique para ativar as notificações.</p>
 
-    <h1 id="status">SISTEMA VALIDADO</h1>
-    <p id="detalhes">Google confirmou seu acesso. Clique para ativar o alarme.</p>
-    
-    <button id="btnConectar" style="padding: 20px; font-size: 1.2em; background: #2196F3; color: white; border: none; border-radius: 12px; cursor: pointer;">
-        ATIVAR AGORA
-    </button>
+  <button id="btnConectar"
+    style="padding: 20px; font-size: 1.2em; background: #2196F3; color: white; border: none; border-radius: 12px; cursor: pointer;">
+    ATIVAR AGORA
+  </button>
 
-<script type="module">
+  <pre id="log" style="text-align:left; max-width:900px; margin:30px auto; background:#f5f5f5; padding:12px; border-radius:10px; overflow:auto;"></pre>
+
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-    import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+    import { getMessaging, getToken, isSupported } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
     const firebaseConfig = {
-        apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
-        authDomain: "agenda-4efa7.firebaseapp.com",
-        projectId: "agenda-4efa7",
-        storageBucket: "agenda-4efa7.appspot.com",
-        messagingSenderId: "299659202964",
-        appId: "1:299659202964:web:e358210feb4d7784f63f81"
+      apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
+      authDomain: "agenda-4efa7.firebaseapp.com",
+      projectId: "agenda-4efa7",
+      storageBucket: "agenda-4efa7.appspot.com",
+      messagingSenderId: "299659202964",
+      appId: "1:299659202964:web:e358210feb4d7784f63f81"
     };
+
+    const VAPID_KEY = "BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8";
+    const SW_PATH = "/ProjetosRev0/firebase-messaging-sw.js";
+    const SW_SCOPE = "/ProjetosRev0/";
+
+    const btn = document.getElementById("btnConectar");
+    const statusTxt = document.getElementById("status");
+    const logEl = document.getElementById("log");
+
+    function log(...args) {
+      const msg = args.map(a => (typeof a === "string" ? a : JSON.stringify(a, null, 2))).join(" ");
+      logEl.textContent += msg + "\n";
+      console.log(...args);
+    }
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const messaging = getMessaging(app);
-
-    const btn = document.getElementById('btnConectar');
-    const statusTxt = document.getElementById('status');
 
     btn.onclick = async () => {
-        try {
-            btn.innerText = "SINCRONIZANDO...";
-            btn.disabled = true;
+      btn.disabled = true;
+      btn.innerText = "SINCRONIZANDO...";
+      statusTxt.innerText = "EM ANDAMENTO...";
 
-            // 1. LOGIN E RENOVAÇÃO (Cura a Falha Técnica)
-            const userCredential = await signInAnonymously(auth);
-            await userCredential.user.getIdToken(true);
-
-            // 2. PERMISSÃO
-            const permission = await Notification.requestPermission();
-            if (permission !== "granted") throw new Error("Permissão negada");
-
-            // 3. REGISTRO (Caminho relativo ./ para o GitHub Pages)
-            const reg = await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', {
-  scope: '/ProjetosRev0/'
-});
-await navigator.serviceWorker.ready;
-
-            // 4. GERAR TOKEN
-            const token = await getToken(messaging, { 
-  vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
-  serviceWorkerRegistration: reg
-});
-
-            if (token) {
-                statusTxt.innerText = "CONECTADO COM SUCESSO!";
-                btn.style.background = "#4CAF50";
-                btn.innerText = "CONEXÃO ATIVA";
-                alert("SUCESSO! O alarme da sua agenda está pronto.");
-                console.log("Token:", token);
-            }
-
-        } catch (err) {
-            console.error(err);
-            statusTxt.innerText = "FALHA TÉCNICA";
-            alert("Erro: " + err.message);
-            btn.disabled = false;
-            btn.innerText = "TENTAR NOVAMENTE";
+      try {
+        // 0) Confere suporte (alguns browsers/ambientes não suportam FCM)
+        const supported = await isSupported();
+        if (!supported) {
+          throw new Error("Este navegador/ambiente não suporta Firebase Messaging (FCM). Teste no Chrome/Edge em HTTPS.");
         }
+
+        // 1) Permissão do navegador
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") throw new Error("Permissão de notificação negada.");
+
+        // 2) Registrar Service Worker no caminho CERTO do GitHub Pages (repo)
+        log("Registrando Service Worker:", SW_PATH, "Scope:", SW_SCOPE);
+        const reg = await navigator.serviceWorker.register(SW_PATH, { scope: SW_SCOPE });
+        await navigator.serviceWorker.ready;
+
+        // 3) Gerar token FCM
+        const messaging = getMessaging(app);
+        log("Gerando token FCM...");
+        const token = await getToken(messaging, {
+          vapidKey: VAPID_KEY,
+          serviceWorkerRegistration: reg
+        });
+
+        if (!token) throw new Error("Token não retornou. Verifique permissões, SW e VAPID.");
+
+        statusTxt.innerText = "CONECTADO COM SUCESSO!";
+        btn.style.background = "#4CAF50";
+        btn.innerText = "CONEXÃO ATIVA";
+        log("TOKEN FCM:", token);
+        alert("SUCESSO! Notificações ativadas.");
+
+      } catch (err) {
+        statusTxt.innerText = "FALHA TÉCNICA";
+        btn.disabled = false;
+        btn.innerText = "TENTAR NOVAMENTE";
+        log("ERRO:", err?.message || err);
+        alert("Erro: " + (err?.message || err));
+      }
     };
-</script>
+  </script>
 </body>
 </html>
