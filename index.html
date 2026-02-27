@@ -8,15 +8,15 @@
 <body style="font-family: sans-serif; text-align: center; padding: 40px;">
 
     <h1 id="status">SISTEMA AGUARDANDO</h1>
-    <p id="detalhes">Clique no botão para forçar a conexão total.</p>
+    <p id="detalhes">O Google está validando sua identidade. Por favor, aguarde o botão ficar azul.</p>
     
-    <button id="btnConectar" style="padding: 20px; font-size: 1.2em; background: #2196F3; color: white; border: none; border-radius: 12px; cursor: pointer;">
-        CONECTAR AGORA
+    <button id="btnConectar" disabled style="padding: 20px; font-size: 1.2em; background: #ccc; color: white; border: none; border-radius: 12px; cursor: not-allowed;">
+        AGUARDANDO VALIDAÇÃO...
     </button>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
         const firebaseConfig = {
@@ -32,27 +32,43 @@
         const auth = getAuth(app);
         const messaging = getMessaging(app);
 
-        document.getElementById('btnConectar').onclick = async () => {
-            const btn = document.getElementById('btnConectar');
-            const statusTxt = document.getElementById('status');
-            const detalhesTxt = document.getElementById('detalhes');
+        const btn = document.getElementById('btnConectar');
+        const statusTxt = document.getElementById('status');
+        const detalhesTxt = document.getElementById('detalhes');
 
+        // 1. INICIA A VALIDAÇÃO NA ENTRADA
+        signInAnonymously(auth).catch(err => {
+            statusTxt.innerText = "ERRO DE IDENTIDADE";
+            detalhesTxt.innerText = "Falha ao conectar com o servidor de segurança.";
+        });
+
+        // 2. SÓ ATIVA O BOTÃO QUANDO O LOGIN ESTIVER 100% PRONTO
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("Login confirmado.");
+                statusTxt.innerText = "SISTEMA PRONTO";
+                detalhesTxt.innerText = "Google validou seu acesso. Clique agora para ativar.";
+                btn.disabled = false;
+                btn.innerText = "ATIVAR CONEXÃO AGORA";
+                btn.style.background = "#2196F3";
+                btn.style.cursor = "pointer";
+            }
+        });
+
+        btn.onclick = async () => {
             try {
                 btn.innerText = "SINCRONIZANDO...";
                 btn.disabled = true;
 
-                // 1. LOGIN (Resolve 'missing authentication credential')
-                await signInAnonymously(auth);
-                console.log("Login validado.");
+                // Pedir permissão do navegador
+                const permission = await Notification.requestPermission();
+                if (permission !== "granted") throw new Error("Ative as notificações no navegador.");
 
-                // 2. REGISTRO (Garante o caminho da pasta ProjetosRev0)
-                const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
-                
-                // 3. A TRAVA DE ESPERA (Resolve 'no active Service Worker')
-                // Isso obriga o código a esperar o navegador ativar o arquivo 100%
-                await navigator.serviceWorker.ready; 
+                // 3. REGISTRA E AGUARDA O ARQUIVO FICAR ATIVO (Resolve 'no active service worker')
+                await navigator.serviceWorker.register('./firebase-messaging-sw.js', { scope: '/ProjetosRev0/' });
+                const registration = await navigator.serviceWorker.ready; 
 
-                // 4. GERAR TOKEN (Chave BDyyehg3... do seu print)
+                // 4. GERA O TOKEN COM A SUA CHAVE DO PRINT
                 const token = await getToken(messaging, { 
                     vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
                     serviceWorkerRegistration: registration
@@ -60,19 +76,19 @@
 
                 if (token) {
                     statusTxt.innerText = "CONECTADO COM SUCESSO!";
+                    detalhesTxt.innerText = "Ponte estabelecida. Salve este código como seu esqueleto oficial.";
                     btn.style.background = "#4CAF50";
                     btn.innerText = "CONEXÃO ATIVA";
-                    alert("SUCESSO! Ponte estabelecida.");
-                    console.log("Seu Token:", token);
+                    alert("SUCESSO! O token foi gerado.");
+                    console.log("Token:", token);
                 }
 
             } catch (err) {
                 console.error(err);
                 statusTxt.innerText = "FALHA TÉCNICA";
-                detalhesTxt.innerText = "Erro: " + err.message;
+                detalhesTxt.innerText = err.message;
                 btn.disabled = false;
                 btn.innerText = "TENTAR NOVAMENTE";
-                btn.style.background = "#f44336";
             }
         };
     </script>
