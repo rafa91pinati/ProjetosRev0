@@ -14,80 +14,74 @@
         CONECTANDO...
     </button>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
-            authDomain: "agenda-4efa7.firebaseapp.com",
-            projectId: "agenda-4efa7",
-            storageBucket: "agenda-4efa7.appspot.com",
-            messagingSenderId: "299659202964",
-            appId: "1:299659202964:web:e358210feb4d7784f63f81"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
+        authDomain: "agenda-4efa7.firebaseapp.com",
+        projectId: "agenda-4efa7",
+        storageBucket: "agenda-4efa7.appspot.com",
+        messagingSenderId: "299659202964",
+        appId: "1:299659202964:web:e358210feb4d7784f63f81"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const messaging = getMessaging(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const messaging = getMessaging(app);
 
-        const btn = document.getElementById('btnAlarme');
-        const statusTxt = document.getElementById('status');
-        const detalhesTxt = document.getElementById('detalhes');
+    const btn = document.getElementById('btnAlarme');
+    const statusTxt = document.getElementById('status');
 
-        // 1. FORÇA O LOGIN ANÔNIMO (Autorizado no seu painel)
-        signInAnonymously(auth).catch(e => {
-            statusTxt.innerText = "ERRO DE IDENTIDADE";
-            detalhesTxt.innerText = "Domínio não autorizado. Verifique o Firebase Auth.";
-        });
+    // Tenta o login assim que abre a página
+    signInAnonymously(auth);
 
-        // 2. MONITOR DE CONEXÃO: SÓ LIBERA O BOTÃO SE ESTIVER LOGADO
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                statusTxt.innerText = "SISTEMA PRONTO";
-                detalhesTxt.innerText = "Login confirmado pelo Google.";
-                btn.disabled = false;
-                btn.innerText = "ATIVAR ALARME AGORA";
-                btn.style.background = "#2196F3";
-                btn.style.color = "white";
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            statusTxt.innerText = "SISTEMA PRONTO";
+            const btnAtivar = document.querySelector('button'); 
+            btnAtivar.disabled = false;
+            btnAtivar.style.background = "#2196F3";
+        }
+    });
+
+    window.solicitarNotificacao = async () => {
+        try {
+            // Garante que estamos logados antes de prosseguir
+            if (!auth.currentUser) {
+                await signInAnonymously(auth);
             }
-        });
 
-        btn.onclick = async () => {
-            try {
-                btn.innerText = "CONECTANDO...";
-                btn.disabled = true;
+            const permission = await Notification.requestPermission();
+            if (permission !== "granted") return alert("Ative as notificações.");
 
-                // Pedir permissão
-                const permission = await Notification.requestPermission();
-                if (permission !== "granted") throw new Error("Permissão negada.");
+            // Limpa qualquer registro antigo que possa estar causando conflito
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for(let r of regs) { await r.unregister(); }
 
-                // Registrar o serviço na pasta do GitHub
-                const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js', {
-                    scope: '/ProjetosRev0/'
-                });
+            // Registra o novo serviço na pasta do GitHub
+            const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js', {
+                scope: '/ProjetosRev0/'
+            });
 
-                // Obter o Token com a CHAVE VAPID REAL do seu print
-                const token = await getToken(messaging, { 
-                    vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
-                    serviceWorkerRegistration: reg
-                });
+            // Chave VAPID exata do seu console
+            const token = await getToken(messaging, { 
+                vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
+                serviceWorkerRegistration: reg
+            });
 
-                if (token) {
-                    statusTxt.innerText = "CONECTADO!";
-                    detalhesTxt.innerText = "Alarme pronto para uso.";
-                    alert("SUCESSO! Alarme ativado.");
-                    console.log("Token:", token);
-                }
-            } catch (err) {
-                console.error(err);
-                statusTxt.innerText = "FALHA TÉCNICA";
-                detalhesTxt.innerText = err.message;
-                btn.disabled = false;
-                btn.innerText = "TENTAR NOVAMENTE";
+            if (token) {
+                alert("SUCESSO! Alarme conectado.");
+                console.log("Token:", token);
+                statusTxt.innerText = "SISTEMA ATIVADO";
             }
-        };
-    </script>
+        } catch (err) {
+            console.error(err);
+            alert("Falha Técnica: " + err.message);
+        }
+    };
+</script>
 </body>
 </html>
