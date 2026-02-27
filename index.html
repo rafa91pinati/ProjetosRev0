@@ -78,18 +78,30 @@
     window.abrirConfig = () => document.getElementById('modalConfig').classList.remove('escondido');
     window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
 
-    window.solicitarNotificacao = async () => {
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-            try {
-                await signInAnonymously(auth); // Resolve erro de autenticação
-                const token = await getToken(messaging, { 
-                    vapidKey: 'BKj4JLMSHmF3LHBQNU-NKVdlIaLBnhOow5qF5BqbTDssWgEM5R-g9v7hujX8iUC_bmEq5SligyEA53wo_cx8HUE' 
-                }); // Chave correta do painel
-                alert("Alarme ativado!");
-            } catch (err) { alert("Erro ao sincronizar. Verifique o console."); }
+window.solicitarNotificacao = async () => {
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+        try {
+            // Realiza o login anônimo que você ativou no console
+            await signInAnonymously(auth);
+            
+            // Busca o token usando a chave VAPID do seu print
+            const token = await getToken(messaging, { 
+                vapidKey: 'BKj4JLMSHmF3LHBQNU-NKVdlIaLBnhOow5qF5BqbTDssWgEM5R-g9v7hujX8iUC_bmEq5SligyEA53wo_cx8HUE',
+                // Forçamos o token a usar o Service Worker registrado na pasta
+                serviceWorkerRegistration: await navigator.serviceWorker.getRegistration('/ProjetosRev0/')
+            });
+
+            if (token) {
+                alert("Alarme ativado com sucesso!");
+                console.log("Token:", token);
+            }
+        } catch (err) { 
+            console.error(err);
+            alert("Erro ao sincronizar. Certifique-se de que o arquivo está na raiz do repositório no GitHub."); 
         }
-    };
+    }
+};
 
     window.setarData = (tipo, el) => {
         const input = document.getElementById('dataSeletor');
@@ -124,13 +136,23 @@
         carregarTarefas();
     };
 
-    async function init() {
-        if ('serviceWorker' in navigator) {
-            await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', { scope: '/ProjetosRev0/' });
-        } // Corrige erro 404 no GitHub Pages
-        setarData('hoje', document.getElementById('btnHoje'));
+// --- REGISTRO DO SERVICE WORKER COM CAMINHO DO GITHUB ---
+async function init() {
+    if ('serviceWorker' in navigator) {
+        try {
+            // Ajustamos o caminho para a subpasta ProjetosRev0
+            const registration = await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', {
+                scope: '/ProjetosRev0/'
+            });
+            console.log('Service Worker registrado com sucesso:', registration.scope);
+        } catch (err) {
+            console.error('Falha ao registrar Service Worker:', err);
+        }
     }
-    init();
+    setarData('hoje', document.getElementById('btnHoje'));
+    carregarCategorias();
+}
+init();
 </script>
 </body>
 </html>
