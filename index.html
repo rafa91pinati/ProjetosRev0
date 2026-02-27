@@ -99,12 +99,14 @@
 
     let filtroDataAtual = 'hoje';
 
-    // FUNÇÕES DO POP-UP (EXPOSTAS)
+    // Funções Globais expostas para o HTML
     window.abrirConfig = () => {
         document.getElementById('modalConfig').classList.remove('escondido');
         listarCategoriasExclusao();
     };
+
     window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
+    
     window.mudarAba = (aba) => {
         const cA = document.getElementById('conteudoAlarme'), cC = document.getElementById('conteudoCategorias');
         const tA = document.getElementById('tabAlarme'), tC = document.getElementById('tabCat');
@@ -112,25 +114,53 @@
         else{cC.classList.remove('escondido');cA.classList.add('escondido');tC.classList.add('ativo');tA.classList.remove('ativo');}
     };
 
-    // ALARME COM LOGIN ANÔNIMO E SUA NOVA CHAVE
     window.solicitarNotificacao = async () => {
         const permission = await Notification.requestPermission();
         if (permission === "granted") {
             try {
-                await signInAnonymously(auth); // Resolve erro de autenticação
+                await signInAnonymously(auth);
+                // Usando a última chave VAPID que você forneceu
                 const token = await getToken(messaging, { 
-                    vapidKey: 'I_waKJL3y7utz-8A8U3rxj863fQqUKf6MsiROfKbesw' // Sua nova chave
+                    vapidKey: 'I_waKJL3y7utz-8A8U3rxj863fQqUKf6MsiROfKbesw' 
                 });
-                alert("Alarme ativado com sucesso!");
+                alert("Alarme configurado no sistema!");
                 console.log("Token:", token);
-            } catch (err) { 
-                console.error(err);
-                alert("Falha técnica ao sincronizar. Tente clicar novamente."); 
-            }
+            } catch (err) { alert("Erro ao conectar com o serviço de alarme."); }
+        } else { alert("Permita as notificações para usar o alarme."); }
+    };
+
+    window.setarData = (tipo, el) => {
+        const input = document.getElementById('dataSeletor');
+        document.querySelectorAll('.btn-date').forEach(b => b.classList.remove('ativo'));
+        if (tipo === 'hoje') { input.value = new Date().toISOString().split('T')[0]; el.classList.add('ativo'); filtroDataAtual = 'hoje'; }
+        else if (tipo === 'amanha') { const am = new Date(); am.setDate(am.getDate()+1); input.value = am.toISOString().split('T')[0]; el.classList.add('ativo'); filtroDataAtual = 'amanha'; }
+        else if (tipo === 'semanal') { el.classList.add('ativo'); filtroDataAtual = 'semanal'; }
+        carregarTarefas();
+    };
+
+    window.selecionarCat = (n, c, el) => {
+        document.querySelectorAll('.btn-cat').forEach(b => b.classList.remove('ativo'));
+        el.classList.add('ativo');
+        document.getElementById('categoriaSelecionada').value = n;
+        document.getElementById('corSelecionada').value = c;
+        carregarTarefas();
+    };
+
+    window.excluirTask = async (id) => { if(confirm("Excluir esta tarefa?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
+
+    window.removerCategoria = async (id) => {
+        if(confirm("Excluir esta categoria?")) { await deleteDoc(doc(db, "categorias", id)); listarCategoriasExclusao(); carregarCategorias(); }
+    };
+
+    window.promptNovaCat = async () => {
+        const n = prompt("Nome da nova categoria:");
+        if(n) {
+            const h = Math.floor(Math.random()*360);
+            await addDoc(collection(db, "categorias"), { nome: n, cor: `hsl(${h},70%,45%)`, criadoEm: new Date() });
+            carregarCategorias();
         }
     };
 
-    // --- LÓGICA DE DADOS ---
     const comprimirFoto = (file) => {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -153,9 +183,7 @@
     };
 
     async function carregarTarefas() {
-        const lista = document.getElementById('listaTarefas'), 
-              dataFiltro = document.getElementById('dataSeletor').value,
-              catFiltro = document.getElementById('categoriaSelecionada').value;
+        const lista = document.getElementById('listaTarefas'), dataFiltro = document.getElementById('dataSeletor').value, catFiltro = document.getElementById('categoriaSelecionada').value;
         try {
             const q = query(collection(db, "tarefas"), orderBy("hora", "asc"));
             const snap = await getDocs(q);
@@ -172,66 +200,10 @@
                         <span style="float:right;">⏰ ${t.hora || '--:--'}</span>
                         <p style="margin:8px 0;">${t.descricao}</p>
                         ${t.fotoUrl ? `<img src="${t.fotoUrl}" style="width:100%; border-radius:10px;">` : ""}
-                    </div>`; // Fotos restauradas
+                    </div>`;
             });
         } catch(e) { console.error(e); }
     }
-
-    // REGISTRO DO SERVICE WORKER (CORRIGE O 404 DO GITHUB)
-    async function init() {
-        if ('serviceWorker' in navigator) {
-            try {
-                // Caminho absoluto para a pasta do repositório
-                await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', {
-                    scope: '/ProjetosRev0/'
-                });
-                console.log("Service Worker ativo.");
-            } catch (e) { console.error("Falha no SW", e); }
-        }
-        setarData('hoje', document.getElementById('btnHoje'));
-        carregarCategorias();
-    }
-
-    window.setarData = (tipo, el) => {
-        const input = document.getElementById('dataSeletor');
-        document.querySelectorAll('.btn-date').forEach(b => b.classList.remove('ativo'));
-        if (tipo === 'hoje') { input.value = new Date().toISOString().split('T')[0]; el.classList.add('ativo'); }
-        else if (tipo === 'amanha') { const am = new Date(); am.setDate(am.getDate()+1); input.value = am.toISOString().split('T')[0]; el.classList.add('ativo'); }
-        carregarTarefas();
-    };
-
-    window.selecionarCat = (n, c, el) => {
-        document.querySelectorAll('.btn-cat').forEach(b => b.classList.remove('ativo'));
-        el.classList.add('ativo');
-        document.getElementById('categoriaSelecionada').value = n;
-        document.getElementById('corSelecionada').value = c;
-        carregarTarefas();
-    };
-
-    document.getElementById('btnSalvar').onclick = async () => {
-        const desc = document.getElementById('descTask').value, 
-              hora = document.getElementById('horaTask').value, 
-              data = document.getElementById('dataSeletor').value, 
-              fileInput = document.getElementById('fotoTask');
-        
-        if(!desc || !data) return alert("Preencha descrição e data!");
-        let btn = document.getElementById('btnSalvar');
-        btn.innerText = "Enviando..."; btn.disabled = true;
-        
-        try {
-            let base64 = fileInput.files[0] ? await comprimirFoto(fileInput.files[0]) : "";
-            await addDoc(collection(db, "tarefas"), {
-                descricao: desc, hora: hora, dataString: data,
-                categoria: document.getElementById('categoriaSelecionada').value,
-                corCategoria: document.getElementById('corSelecionada').value,
-                fotoUrl: base64, dataCriacao: new Date()
-            });
-            document.getElementById('descTask').value = ""; fileInput.value = ""; carregarTarefas();
-        } catch(e) { alert("Erro ao salvar!"); }
-        btn.innerText = "Salvar Tudo"; btn.disabled = false;
-    };
-
-    window.excluirTask = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
 
     async function carregarCategorias() {
         const container = document.getElementById('listaBotoesCat');
@@ -254,20 +226,27 @@
         });
     }
 
-    window.removerCategoria = async (id) => {
-        if(confirm("Excluir categoria?")) { await deleteDoc(doc(db, "categorias", id)); listarCategoriasExclusao(); carregarCategorias(); }
+    document.getElementById('btnSalvar').onclick = async () => {
+        const desc = document.getElementById('descTask').value, hora = document.getElementById('horaTask').value, data = document.getElementById('dataSeletor').value, fileInput = document.getElementById('fotoTask');
+        if(!desc || !data) return alert("Preencha descrição e data!");
+        let btn = document.getElementById('btnSalvar');
+        btn.innerText = "Enviando..."; btn.disabled = true;
+        try {
+            let base64 = fileInput.files[0] ? await comprimirFoto(fileInput.files[0]) : "";
+            await addDoc(collection(db, "tarefas"), {
+                descricao: desc, hora: hora, dataString: data,
+                categoria: document.getElementById('categoriaSelecionada').value,
+                corCategoria: document.getElementById('corSelecionada').value,
+                fotoUrl: base64, dataCriacao: new Date()
+            });
+            document.getElementById('descTask').value = ""; fileInput.value = ""; carregarTarefas();
+        } catch(e) { alert("Erro ao salvar!"); }
+        btn.innerText = "Salvar Tudo"; btn.disabled = false;
     };
 
-    window.promptNovaCat = async () => {
-        const n = prompt("Nova Categoria:");
-        if(n) {
-            const h = Math.floor(Math.random()*360);
-            await addDoc(collection(db, "categorias"), { nome: n, cor: `hsl(${h},70%,45%)`, criadoEm: new Date() });
-            carregarCategorias();
-        }
-    };
-
-    init();
+    // Inicialização
+    setarData('hoje', document.getElementById('btnHoje'));
+    carregarCategorias();
 </script>
 </body>
 </html>
