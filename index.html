@@ -99,19 +99,31 @@
 
     let filtroDataAtual = 'hoje';
 
-    // --- FUNÇÕES GLOBAIS (CONECTADAS AO HTML) ---
     window.abrirConfig = () => {
         document.getElementById('modalConfig').classList.remove('escondido');
         listarCategoriasExclusao();
     };
-
     window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
-
+    
     window.mudarAba = (aba) => {
         const cA = document.getElementById('conteudoAlarme'), cC = document.getElementById('conteudoCategorias');
         const tA = document.getElementById('tabAlarme'), tC = document.getElementById('tabCat');
         if(aba==='alarme'){cA.classList.remove('escondido');cC.classList.add('escondido');tA.classList.add('ativo');tC.classList.remove('ativo');}
         else{cC.classList.remove('escondido');cA.classList.add('escondido');tC.classList.add('ativo');tA.classList.remove('ativo');}
+    };
+
+    window.solicitarNotificacao = async () => {
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+            try {
+                await signInAnonymously(auth);
+                const token = await getToken(messaging, { 
+                    vapidKey: 'I_waKJL3y7utz-8A8U3rxj863fQqUKf6MsiROfKbesw' 
+                });
+                alert("Alarme ativado com sucesso!");
+                console.log("Token:", token);
+            } catch (err) { alert("Erro de autenticação no Firebase."); }
+        }
     };
 
     window.setarData = (tipo, el) => {
@@ -131,6 +143,12 @@
         carregarTarefas();
     };
 
+    window.excluirTask = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
+
+    window.removerCategoria = async (id) => {
+        if(confirm("Excluir categoria?")) { await deleteDoc(doc(db, "categorias", id)); listarCategoriasExclusao(); carregarCategorias(); }
+    };
+
     window.promptNovaCat = async () => {
         const n = prompt("Nova Categoria:");
         if(n) {
@@ -140,31 +158,6 @@
         }
     };
 
-    window.excluirTask = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
-
-    window.removerCategoria = async (id) => {
-        if(confirm("Excluir categoria?")) { await deleteDoc(doc(db, "categorias", id)); listarCategoriasExclusao(); carregarCategorias(); }
-    };
-
-    // --- ALARME E NOTIFICAÇÃO ---
-    window.solicitarNotificacao = async () => {
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-            try {
-                await signInAnonymously(auth);
-                const token = await getToken(messaging, { 
-                    vapidKey: 'BKj4JLMSHmF3LHBQNU-NKVdlIaLBnhOow5qF5BqbTDssWgEM5R-g9v7hujX8iUC_bmEq5SligyEA53wo_cx8HUE' 
-                });
-                alert("Alarme ativado com sucesso!");
-                console.log("Token:", token);
-            } catch (err) { 
-                console.error(err);
-                alert("Erro ao obter token. Ative o Authentication no Firebase."); 
-            }
-        } else { alert("Permita as notificações."); }
-    };
-
-    // --- LÓGICA DE DADOS ---
     const comprimirFoto = (file) => {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -187,9 +180,7 @@
     };
 
     async function carregarTarefas() {
-        const lista = document.getElementById('listaTarefas'), 
-              dataFiltro = document.getElementById('dataSeletor').value, 
-              catFiltro = document.getElementById('categoriaSelecionada').value;
+        const lista = document.getElementById('listaTarefas'), dataFiltro = document.getElementById('dataSeletor').value, catFiltro = document.getElementById('categoriaSelecionada').value;
         try {
             const q = query(collection(db, "tarefas"), orderBy("hora", "asc"));
             const snap = await getDocs(q);
@@ -205,7 +196,7 @@
                         <small style="color:${t.corCategoria};font-weight:bold">${t.categoria || 'Geral'}</small>
                         <span style="float:right;">⏰ ${t.hora || '--:--'}</span>
                         <p style="margin:8px 0;">${t.descricao}</p>
-                        ${t.fotoUrl ? `<img src="${t.fotoUrl}" style="width:100%; border-radius:10px; margin-top:5px;">` : ""}
+                        ${t.fotoUrl ? `<img src="${t.fotoUrl}" style="width:100%; border-radius:10px;">` : ""}
                     </div>`;
             });
         } catch(e) { console.error(e); }
@@ -233,15 +224,10 @@
     }
 
     document.getElementById('btnSalvar').onclick = async () => {
-        const desc = document.getElementById('descTask').value, 
-              hora = document.getElementById('horaTask').value, 
-              data = document.getElementById('dataSeletor').value, 
-              fileInput = document.getElementById('fotoTask');
-        
+        const desc = document.getElementById('descTask').value, hora = document.getElementById('horaTask').value, data = document.getElementById('dataSeletor').value, fileInput = document.getElementById('fotoTask');
         if(!desc || !data) return alert("Preencha descrição e data!");
         let btn = document.getElementById('btnSalvar');
         btn.innerText = "Enviando..."; btn.disabled = true;
-        
         try {
             let base64 = fileInput.files[0] ? await comprimirFoto(fileInput.files[0]) : "";
             await addDoc(collection(db, "tarefas"), {
@@ -255,27 +241,8 @@
         btn.innerText = "Salvar Tudo"; btn.disabled = false;
     };
 
-    // --- INICIALIZAÇÃO ---
-    async function init() {
-        await checkUpdate();
-        setarData('hoje', document.getElementById('btnHoje'));
-        carregarCategorias();
-    }
-
-    async function checkUpdate() {
-        if ('serviceWorker' in navigator) {
-            const regs = await navigator.serviceWorker.getRegistrations();
-            for (let reg of regs) {
-                await reg.update();
-                if (reg.waiting) {
-                    reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-                    window.location.reload();
-                }
-            }
-        }
-    }
-
-    init();
+    setarData('hoje', document.getElementById('btnHoje'));
+    carregarCategorias();
 </script>
 </body>
 </html>
