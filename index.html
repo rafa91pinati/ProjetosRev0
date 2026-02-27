@@ -17,7 +17,7 @@
         .btn-cat { white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd; background: #f9f9f9; cursor: pointer; font-size: 0.85em; }
         .btn-cat.ativo { background: #333; color: white; }
         .secao-card { background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
-        input[type="text"], input[type="time"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        input[type="text"], input[type="time"], input[type="number"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         #btnSalvar { background: #4CAF50; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
         .tarefa-item { background: #fff; margin-bottom: 10px; padding: 12px; border-radius: 10px; border-left: 6px solid #2196F3; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
         .btn-excluir { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #ff4d4d; cursor: pointer; }
@@ -78,21 +78,6 @@
 </div>
 
 <script type="module">
-    // --- LÓGICA DE ATUALIZAÇÃO ---
-    async function checkUpdate() {
-        if ('serviceWorker' in navigator) {
-            const regs = await navigator.serviceWorker.getRegistrations();
-            for (let reg of regs) {
-                await reg.update();
-                if (reg.waiting) {
-                    reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-                    window.location.reload();
-                }
-            }
-        }
-    }
-    window.addEventListener('load', checkUpdate);
-
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
@@ -112,7 +97,6 @@
 
     let filtroDataAtual = 'hoje';
 
-    // COMPRESSÃO DE FOTO
     const comprimirFoto = (file) => {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -134,18 +118,19 @@
         });
     };
 
-    // ALARME COM SUA CHAVE VAPID
     window.solicitarNotificacao = async () => {
         const permission = await Notification.requestPermission();
         if (permission === "granted") {
             try {
-                // INTEGRADA SUA CHAVE: maD1HtPoKFN0DkDXzHEGffsJ6Xv_lRvagryZuhRJNu8
-                const token = await getToken(messaging, { vapidKey: 'maD1HtPoKFN0DkDXzHEGffsJ6Xv_lRvagryZuhRJNu8' });
+                // CHAVE ATUALIZADA DO SEU CONSOLE
+                const token = await getToken(messaging, { 
+                    vapidKey: 'BKj4JLMSHmF3LHBQNU-NKVdlIaLBnhOow5qF5BqbTDssWgEM5R-g9v7hujX8iUC_bmEq5SligyEA53wo_cx8HUE' 
+                });
                 alert("Alarme ativado com sucesso!");
                 console.log("Token:", token);
             } catch (err) { 
                 console.error(err);
-                alert("Erro ao obter token. Verifique se o Service Worker está instalado."); 
+                alert("Erro ao obter token. Ative o Authentication no Firebase conforme orientado."); 
             }
         } else { alert("Permita as notificações."); }
     };
@@ -188,7 +173,7 @@
                     <small style="color:${t.corCategoria};font-weight:bold">${t.categoria || 'Geral'}</small>
                     <span style="float:right;">⏰ ${t.hora || '--:--'}</span>
                     <p style="margin:8px 0;">${t.descricao}</p>
-                    ${t.fotoUrl ? `<img src="${t.fotoUrl}">` : ""}
+                    ${t.fotoUrl ? `<img src="${t.fotoUrl}" style="width:100%; border-radius:10px;">` : ""}
                 </div>`;
             });
         } catch(e) {}
