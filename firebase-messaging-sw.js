@@ -1,5 +1,6 @@
-importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-app-sw.js');
-importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-sw.js');
+// Scripts estáveis para evitar falha de carregamento
+importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-compat.js');
 
 firebase.initializeApp({
     apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
@@ -11,6 +12,7 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
+    console.log('Alarme recebido:', payload);
     self.registration.showNotification(payload.notification.title, {
         body: payload.notification.body,
         icon: 'favicon.ico'
