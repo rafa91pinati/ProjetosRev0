@@ -9,15 +9,15 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
         .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         
-        /* 1. AJUSTE CABEÇALHO (VERMELHO) - Calendário alinhado */
+        /* 1. AJUSTE CABEÇALHO (VERMELHO) - Alinhamento e altura igual */
         .timeline-header { display: flex; gap: 5px; margin-bottom: 15px; align-items: stretch; height: 42px; }
         .btn-date { flex: 1; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.65rem; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center; }
         .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
         #dataSeletor { flex: 2.5; padding: 0 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.85rem; height: 100%; box-sizing: border-box; }
         .btn-config { background: none; border: none; font-size: 1.3em; cursor: pointer; display: flex; align-items: center; padding: 0 5px; }
 
-        /* 3. TÍTULOS DE SESSÃO (AZUL) */
-        .header-secao { border-left: 5px solid #2196F3; padding-left: 10px; margin: 20px 0 10px; color: #2196F3; font-size: 0.9rem; font-weight: bold; text-transform: uppercase; }
+        /* 3. CABEÇALHOS DAS SESSÕES (AZUL) */
+        .header-secao { border-left: 5px solid #2196F3; padding-left: 10px; margin: 20px 0 10px; color: #2196F3; font-size: 1rem; font-weight: bold; text-transform: uppercase; }
 
         .category-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
         .btn-cat { white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd; background: #f9f9f9; cursor: pointer; font-size: 0.85em; }
@@ -27,12 +27,12 @@
         input[type="text"], input[type="time"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         #btnSalvar { background: #4CAF50; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
         
-        /* 2. CARD DE TAREFA (VERDE) - Lixeira e Alarme separados */
+        /* 2. CARD DE TAREFA (VERDE) - Lixeira e Alarme bem separados */
         .tarefa-item { background: #fff; margin-bottom: 12px; padding: 15px; border-radius: 12px; border-left: 6px solid #2196F3; box-shadow: 0 3px 6px rgba(0,0,0,0.08); position: relative; }
         .tarefa-info-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .btn-excluir { background: #fff0f0; border: none; color: #ff4d4d; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .tarefa-desc { margin: 10px 0; font-size: 0.95rem; color: #333; font-weight: 500; }
-        .tarefa-hora { font-size: 0.85rem; color: #2196F3; font-weight: bold; display: flex; align-items: center; gap: 5px; background: #e3f2fd; padding: 4px 10px; border-radius: 6px; }
+        .tarefa-hora { font-size: 0.85rem; color: #2196F3; font-weight: bold; display: flex; align-items: center; gap: 5px; background: #e3f2fd; padding: 4px 10px; border-radius: 6px; width: fit-content; }
 
         img { max-width: 100%; border-radius: 10px; margin-top: 10px; display: block; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
@@ -49,20 +49,21 @@
         <button class="btn-config" onclick="abrirConfig()">⚙️</button>
     </div>
 
-    <div class="header-secao">📝 Adicionar Tarefa</div> <div class="secao-card">
+    <div class="header-secao">📝 Nova Tarefa</div> <div class="secao-card">
         <input type="text" id="descTask" placeholder="O que vamos fazer?">
         <input type="time" id="horaTask">
         <button id="btnSalvar">Salvar Tudo</button>
     </div>
 
-    <div class="header-secao">📅 Minhas Atividades</div> <div id="listaTarefas">Sincronizando...</div>
+    <div class="header-secao">📅 Minhas Atividades</div> <div id="secaoLista">
+        <div id="listaTarefas">Sincronizando...</div>
+    </div>
 </div>
 
 <div id="modalConfig" class="modal escondido">
     <div class="modal-content">
-        <button onclick="fecharConfig()" style="position: absolute; right: 15px; top: 15px; border:none; background:none; font-size:1.2em;">✕</button>
-        <h4>Configurações de Alarme</h4>
-        <input type="number" id="minutosAlerta" value="15" placeholder="Minutos de antecedência">
+        <button onclick="fecharConfig()" style="position: absolute; right: 15px; top: 15px; border:none; background:none; font-size:1.2em; cursor:pointer;">✕</button>
+        <h4>Configurar Alarme</h4>
         <button onclick="solicitarNotificacao()" style="width:100%; padding:12px; background:#2196F3; color:white; border:none; border-radius:8px;">Ativar Alarme</button>
     </div>
 </div>
@@ -87,28 +88,27 @@
     const messaging = getMessaging(app);
     const auth = getAuth(app);
 
+    // FUNÇÃO PARA ATIVAR O ALARME COM A CHAVE CORRETA
     window.solicitarNotificacao = async () => {
         const permission = await Notification.requestPermission();
         if (permission === "granted") {
             try {
-                // Login para evitar erro de autorização
-                await signInAnonymously(auth);
-
-                // Caminho corrigido para a pasta ProjetosRev0
-                const registration = await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', {
-                    scope: '/ProjetosRev0/'
-                });
-
-                // LEMBRE-SE: USE A CHAVE PÚBLICA (QUE COMEÇA COM 'B') AQUI!
+                await signInAnonymously(auth); // Resolve erro de domínio autorizado
+                
+                // Registra o Service Worker na pasta correta do GitHub
+                const reg = await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', { scope: '/ProjetosRev0/' });
+                
+                // USANDO A CHAVE PÚBLICA GIGANTE DA FOTO
                 const token = await getToken(messaging, { 
-                    vapidKey: 'I_waKJL3y7utz-8A8U3rxj863fQqUKf6MsiROfKbesw',
-                    serviceWorkerRegistration: registration
+                    vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
+                    serviceWorkerRegistration: reg
                 });
                 
-                alert("Alarme ativado!");
+                alert("Alarme ativado com sucesso!");
                 console.log("Token:", token);
             } catch (err) { 
-                alert("Erro ao sincronizar. Verifique a chave VAPID e o domínio.");
+                console.error(err);
+                alert("Erro técnico: " + err.message); 
             }
         }
     };
@@ -116,7 +116,34 @@
     window.abrirConfig = () => document.getElementById('modalConfig').classList.remove('escondido');
     window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
     
-    // Funções de carregar e salvar permanecem integradas...
+    window.setarData = (tipo) => {
+        if (tipo === 'hoje') document.getElementById('dataSeletor').value = new Date().toISOString().split('T')[0];
+        carregarTarefas();
+    };
+
+    async function carregarTarefas() {
+        const lista = document.getElementById('listaTarefas'), data = document.getElementById('dataSeletor').value;
+        const q = query(collection(db, "tarefas"), orderBy("hora", "asc"));
+        const snap = await getDocs(q);
+        lista.innerHTML = "";
+        snap.forEach(d => {
+            const t = d.data();
+            if (t.dataString === data) {
+                lista.innerHTML += `
+                    <div class="tarefa-item">
+                        <div class="tarefa-info-top">
+                            <div class="tarefa-hora">⏰ ${t.hora}</div>
+                            <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
+                        </div>
+                        <div class="tarefa-desc">${t.descricao}</div>
+                    </div>`;
+            }
+        });
+    }
+
+    window.excluirTask = async (id) => { if(confirm("Remover?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
+
+    window.setarData('hoje');
 </script>
 </body>
 </html>
