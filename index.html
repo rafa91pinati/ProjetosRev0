@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conector Agenda</title>
+    <title>Conector Agenda Inteligente</title>
 </head>
 <body style="font-family: sans-serif; text-align: center; padding: 40px;">
-    <h1 id="status">SISTEMA PRONTO</h1>
-    <p id="detalhes">Clique para ativar o alarme com segurança.</p>
+
+    <h1 id="status">SISTEMA AGUARDANDO</h1>
+    <p id="detalhes">Clique no botão para forçar a conexão total.</p>
+    
     <button id="btnConectar" style="padding: 20px; font-size: 1.2em; background: #2196F3; color: white; border: none; border-radius: 12px; cursor: pointer;">
-        ATIVAR AGORA
+        CONECTAR AGORA
     </button>
 
     <script type="module">
@@ -33,36 +35,44 @@
         document.getElementById('btnConectar').onclick = async () => {
             const btn = document.getElementById('btnConectar');
             const statusTxt = document.getElementById('status');
-            
+            const detalhesTxt = document.getElementById('detalhes');
+
             try {
                 btn.innerText = "SINCRONIZANDO...";
                 btn.disabled = true;
 
                 // 1. LOGIN (Resolve 'missing authentication credential')
                 await signInAnonymously(auth);
+                console.log("Login validado.");
 
-                // 2. REGISTRO E ESPERA (Resolve 'no active Service Worker')
-                await navigator.serviceWorker.register('./firebase-messaging-sw.js', { scope: '/ProjetosRev0/' });
-                const registration = await navigator.serviceWorker.ready; // AGUARDA O ATIVAMENTO REAL
+                // 2. REGISTRO (Garante o caminho da pasta ProjetosRev0)
+                const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+                
+                // 3. A TRAVA DE ESPERA (Resolve 'no active Service Worker')
+                // Isso obriga o código a esperar o navegador ativar o arquivo 100%
+                await navigator.serviceWorker.ready; 
 
-                // 3. GERAR TOKEN COM A CHAVE DO PRINT
+                // 4. GERAR TOKEN (Chave BDyyehg3... do seu print)
                 const token = await getToken(messaging, { 
                     vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
                     serviceWorkerRegistration: registration
                 });
 
                 if (token) {
-                    statusTxt.innerText = "CONECTADO!";
+                    statusTxt.innerText = "CONECTADO COM SUCESSO!";
                     btn.style.background = "#4CAF50";
-                    btn.innerText = "SUCESSO";
-                    alert("Alarme ativado com sucesso!");
-                    console.log("Token:", token);
+                    btn.innerText = "CONEXÃO ATIVA";
+                    alert("SUCESSO! Ponte estabelecida.");
+                    console.log("Seu Token:", token);
                 }
+
             } catch (err) {
-                statusTxt.innerText = "ERRO TÉCNICO";
-                alert(err.message);
+                console.error(err);
+                statusTxt.innerText = "FALHA TÉCNICA";
+                detalhesTxt.innerText = "Erro: " + err.message;
                 btn.disabled = false;
                 btn.innerText = "TENTAR NOVAMENTE";
+                btn.style.background = "#f44336";
             }
         };
     </script>
