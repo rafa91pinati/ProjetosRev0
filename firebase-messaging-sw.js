@@ -1,4 +1,3 @@
-// Bibliotecas de compatibilidade para estabilidade total
 importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-compat.js');
 
@@ -11,10 +10,10 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Garante que o alarme responda imediatamente
+// Força o navegador a usar este arquivo novo IMEDIATAMENTE
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', () => self.clients.claim());
 
 messaging.onBackgroundMessage((payload) => {
-    console.log('Sinal de alarme recebido:', payload);
+    console.log('Sinal de alarme:', payload);
 });
