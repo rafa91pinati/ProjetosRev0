@@ -9,15 +9,15 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
         .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         
-        /* Ajuste do Cabeçalho (Vermelho) */
-        .timeline-header { display: grid; grid-template-columns: 1fr 1fr 1fr 2.5fr auto; gap: 5px; margin-bottom: 15px; align-items: stretch; }
-        .btn-date { width: 100%; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-align: center; height: 38px; display: flex; align-items: center; justify-content: center; }
+        /* CABEÇALHO (Ajuste Vermelho) */
+        .timeline-header { display: flex; gap: 5px; margin-bottom: 15px; align-items: center; justify-content: space-between; }
+        .btn-date { flex: 1; padding: 10px 0; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.7rem; font-weight: bold; height: 42px; display: flex; align-items: center; justify-content: center; }
         .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
-        #dataSeletor { width: 100%; border-radius: 8px; border: 1px solid #ddd; font-size: 0.8rem; height: 38px; padding: 0 5px; box-sizing: border-box; }
-        .btn-config { background: none; border: none; font-size: 1.3em; cursor: pointer; padding: 0 5px; display: flex; align-items: center; }
-        
-        /* Cabeçalhos de Sessão (Azul) */
-        .secao-titulo { font-size: 0.9rem; font-weight: bold; color: #2196F3; margin: 15px 0 10px 5px; border-left: 4px solid #2196F3; padding-left: 10px; text-transform: uppercase; }
+        #dataSeletor { flex: 2; padding: 0 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.85rem; height: 42px; box-sizing: border-box; }
+        .btn-config { background: none; border: none; font-size: 1.3em; cursor: pointer; height: 42px; display: flex; align-items: center; }
+
+        /* TÍTULOS DE SESSÃO (Ajuste Azul) */
+        .header-secao { border-left: 5px solid #2196F3; padding-left: 10px; margin: 20px 0 10px; color: #2196F3; font-size: 1rem; font-weight: bold; text-transform: uppercase; }
 
         .category-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
         .btn-cat { white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd; background: #f9f9f9; cursor: pointer; font-size: 0.85em; }
@@ -25,21 +25,21 @@
         
         .secao-card { background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
         input[type="text"], input[type="time"], input[type="number"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        #btnSalvar { background: #4CAF50; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        #btnSalvar { background: #4CAF50; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
         
-        /* Ajuste do Card (Verde) */
-        .tarefa-item { background: #fff; margin-bottom: 10px; padding: 12px; border-radius: 10px; border-left: 6px solid #2196F3; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
-        .tarefa-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; }
-        .tarefa-info { display: flex; flex-direction: column; }
-        .tarefa-acoes { display: flex; align-items: center; gap: 10px; }
-        .btn-excluir { background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 1.1em; padding: 0; }
-        .horario-tag { background: #e3f2fd; color: #2196F3; padding: 2px 8px; border-radius: 5px; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; gap: 4px; }
-        
+        /* CARD DE TAREFA (Ajuste Verde) */
+        .tarefa-item { background: #fff; margin-bottom: 12px; padding: 15px; border-radius: 12px; border-left: 6px solid #2196F3; box-shadow: 0 3px 6px rgba(0,0,0,0.08); position: relative; }
+        .tarefa-info-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .label-cat { font-size: 0.75rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; background: #f0f0f0; }
+        .btn-excluir { background: #fff0f0; border: none; color: #ff4d4d; cursor: pointer; font-size: 1rem; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn-excluir:hover { background: #ff4d4d; color: white; }
+        .tarefa-desc { margin: 10px 0; font-size: 0.95rem; color: #333; line-height: 1.4; }
+        .tarefa-hora { font-size: 0.85rem; color: #666; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+
         img { max-width: 100%; border-radius: 10px; margin-top: 10px; display: block; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
         .escondido { display: none !important; }
         .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; position: relative; }
-        .modal-tabs { display: flex; justify-content: space-around; margin-bottom: 15px; border-bottom: 1px solid #eee; }
         .tab-btn { background: none; border: none; padding: 10px; cursor: pointer; opacity: 0.5; font-size: 1.5em; }
         .tab-btn.ativo { opacity: 1; border-bottom: 3px solid #2196F3; }
     </style>
@@ -59,7 +59,7 @@
     <input type="hidden" id="categoriaSelecionada" value="Geral">
     <input type="hidden" id="corSelecionada" value="#4CAF50">
 
-    <div class="secao-titulo">Adicionar Nova Tarefa</div>
+    <div class="header-secao">📝 Nova Tarefa</div>
     <div class="secao-card">
         <input type="text" id="descTask" placeholder="O que vamos fazer?">
         <div style="display: flex; gap: 8px;">
@@ -69,7 +69,7 @@
         <button id="btnSalvar">Salvar na Agenda</button>
     </div>
 
-    <div class="secao-titulo">Minhas Atividades</div>
+    <div class="header-secao">📅 Minhas Atividades</div>
     <div id="secaoLista">
         <div id="listaTarefas">Sincronizando...</div>
     </div>
@@ -134,12 +134,10 @@
         if (permission === "granted") {
             try {
                 await signInAnonymously(auth);
-                const token = await getToken(messaging, { 
-                    vapidKey: 'I_waKJL3y7utz-8A8U3rxj863fQqUKf6MsiROfKbesw' 
-                });
-                alert("Alarme configurado no sistema!");
-            } catch (err) { alert("Erro ao conectar com o serviço de alarme."); }
-        } else { alert("Permita as notificações para usar o alarme."); }
+                const token = await getToken(messaging, { vapidKey: 'I_waKJL3y7utz-8A8U3rxj863fQqUKf6MsiROfKbesw' });
+                alert("Notificações ativas!");
+            } catch (err) { alert("Erro ao conectar notificações."); }
+        }
     };
 
     window.setarData = (tipo, el) => {
@@ -159,20 +157,7 @@
         carregarTarefas();
     };
 
-    window.excluirTask = async (id) => { if(confirm("Excluir esta tarefa?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
-
-    window.removerCategoria = async (id) => {
-        if(confirm("Excluir esta categoria?")) { await deleteDoc(doc(db, "categorias", id)); listarCategoriasExclusao(); carregarCategorias(); }
-    };
-
-    window.promptNovaCat = async () => {
-        const n = prompt("Nome da nova categoria:");
-        if(n) {
-            const h = Math.floor(Math.random()*360);
-            await addDoc(collection(db, "categorias"), { nome: n, cor: `hsl(${h},70%,45%)`, criadoEm: new Date() });
-            carregarCategorias();
-        }
-    };
+    window.excluirTask = async (id) => { if(confirm("Remover esta atividade?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
 
     const comprimirFoto = (file) => {
         return new Promise((resolve) => {
@@ -207,17 +192,13 @@
                 if (filtroDataAtual !== 'semanal' && t.dataString !== dataFiltro) return;
                 
                 lista.innerHTML += `
-                    <div class="tarefa-item" style="border-left: 6px solid ${t.corCategoria || '#2196F3'}">
-                        <div class="tarefa-header">
-                            <div class="tarefa-info">
-                                <small style="color:${t.corCategoria};font-weight:bold">${t.categoria || 'Geral'}</small>
-                                <p style="margin:8px 0; font-weight: 500;">${t.descricao}</p>
-                            </div>
-                            <div class="tarefa-acoes">
-                                <div class="horario-tag">⏰ ${t.hora || '--:--'}</div>
-                                <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
-                            </div>
+                    <div class="tarefa-item" style="border-left-color: ${t.corCategoria || '#2196F3'}">
+                        <div class="tarefa-info-top">
+                            <span class="label-cat" style="color:${t.corCategoria}">${t.categoria || 'Geral'}</span>
+                            <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
                         </div>
+                        <div class="tarefa-desc">${t.descricao}</div>
+                        <div class="tarefa-hora">⏰ ${t.hora || '--:--'}</div>
                         ${t.fotoUrl ? `<img src="${t.fotoUrl}">` : ""}
                     </div>`;
             });
@@ -233,16 +214,6 @@
             container.innerHTML += `<button class="btn-cat" style="border-bottom:3px solid ${c.cor}" onclick="selecionarCat('${c.nome}', '${c.cor}', this)">${c.nome}</button>`;
         });
         container.innerHTML += `<button onclick="promptNovaCat()" style="border:none;background:none;font-size:1.5em;color:#2196F3;">+</button>`;
-    }
-
-    async function listarCategoriasExclusao() {
-        const container = document.getElementById('listaExcluirCat');
-        const snap = await getDocs(collection(db, "categorias"));
-        container.innerHTML = "";
-        snap.forEach(d => {
-            const c = d.data();
-            container.innerHTML += `<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #eee;"><span>${c.nome}</span><button onclick="removerCategoria('${d.id}')" style="color:red;border:none;background:none;">🗑️</button></div>`;
-        });
     }
 
     document.getElementById('btnSalvar').onclick = async () => {
