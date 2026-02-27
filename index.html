@@ -34,61 +34,48 @@
 
     const btn = document.getElementById('btnConectar');
     const statusTxt = document.getElementById('status');
-    const msgTxt = document.getElementById('msg');
 
-    // 1. INICIAR CONEXIÓN AL CARGAR
-    signInAnonymously(auth).catch(err => {
-        statusTxt.innerText = "ERROR DE IDENTIDAD";
-        msgTxt.innerText = "Revise la conexión a internet.";
-    });
+    // Tenta o login anônimo assim que a página carrega
+    signInAnonymously(auth).catch(err => console.error("Falha no login inicial", err));
 
-    // 2. SOLO HABILITA EL ALARMA CUANDO EL GOOGLE RESPONDE
+    // Monitora a identidade: só libera o alarme se o Google confirmar quem você é
     onAuthStateChanged(auth, (user) => {
         if (user) {
             statusTxt.innerText = "SISTEMA PRONTO";
-            msgTxt.innerText = "Google ha validado su acceso.";
             btn.disabled = false;
-            btn.innerText = "ACTIVAR ALARMA AHORA";
             btn.style.background = "#4CAF50";
-            btn.style.cursor = "pointer";
         }
     });
 
     btn.onclick = async () => {
         try {
             btn.innerText = "CONECTANDO...";
-            btn.disabled = true;
-
             const permission = await Notification.requestPermission();
-            if (permission !== "granted") throw new Error("Permiso denegado.");
+            if (permission !== "granted") throw new Error("Permissão negada.");
 
-            // LIMPIEZA DE CACHÉ INTERNO (Clave para evitar el error 'missing credential')
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            for(let reg of registrations) { await reg.unregister(); }
+            // Limpa registros antigos para evitar o erro de credencial
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for(let r of regs) { await r.unregister(); }
 
-            // Registro del nuevo servicio con la llave pública correcta
+            // Registra o novo alarme
             const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
-            
+
+            // Usa a chave pública GIGANTE que você pegou no console
             const token = await getToken(messaging, { 
                 vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
                 serviceWorkerRegistration: reg
             });
 
             if (token) {
-                statusTxt.innerText = "ALARMA ACTIVADA";
-                msgTxt.innerText = "Conexión exitosa con el servidor.";
-                alert("¡ÉXITO! Alarma configurada.");
-                console.log("Token:", token);
+                statusTxt.innerText = "SISTEMA ATIVADO!";
+                alert("SUCESSO! Alarme conectado.");
             }
-
         } catch (err) {
-            console.error(err);
-            statusTxt.innerText = "FALLA TÉCNICA";
-            msgTxt.innerText = "Intente limpiar el historial del navegador.";
-            btn.disabled = false;
-            btn.innerText = "REINTENTAR";
+            statusTxt.innerText = "FALHA TÉCNICA";
+            alert("Erro: " + err.message);
         }
     };
 </script>
+
 </body>
 </html>
