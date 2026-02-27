@@ -11,40 +11,44 @@
     
     /* CABEÇALHO COMPACTO - SEM ROLAGEM */
     .timeline-header { 
-        display: flex; 
-        gap: 4px; /* Espaço reduzido para ganhar área útil */
-        margin-bottom: 15px; 
-        align-items: center; 
-        width: 100%;
-        box-sizing: border-box;
-        overflow: hidden; /* Remove qualquer possibilidade de scroll lateral */
-    }
-    
-    .btn-date { 
-        flex: 1; 
-        min-width: 0; /* Essencial para permitir que o botão encolha */
-        padding: 10px 2px; /* Padding lateral mínimo */
-        border-radius: 8px; 
-        border: 1px solid #ddd; 
-        background: #fff; 
-        cursor: pointer; 
-        font-size: 0.7rem; /* Fonte levemente menor para garantir o encaixe */
-        font-weight: bold; 
-        text-align: center;
-        white-space: nowrap;
-    }
-    .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
+    display: grid; 
+    /* Divide a tela em 5 colunas: 3 iguais para botões, 1 maior para data e 1 pequena para engrenagem */
+    grid-template-columns: 1fr 1fr 1fr 1.5fr auto; 
+    gap: 4px; 
+    margin-bottom: 15px; 
+    align-items: center; 
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden; /* Trava total contra rolagem */
+}
 
-    #dataSeletor { 
-        flex: 1.4; /* Dá um pouco mais de espaço para a data aparecer */
-        min-width: 0;
-        padding: 8px 2px; 
-        border-radius: 8px; 
-        border: 1px solid #ddd; 
-        font-size: 0.7rem;
-    }
+.btn-date { 
+    width: 100%; /* Ocupa exatamente o espaço da sua coluna no grid */
+    padding: 10px 0; /* Remove padding lateral para o texto caber */
+    border-radius: 8px; 
+    border: 1px solid #ddd; 
+    background: #fff; 
+    cursor: pointer; 
+    font-size: 0.65rem; /* Diminuímos mais um pouco para garantir */
+    font-weight: bold; 
+    text-align: center;
+    white-space: nowrap;
+}
 
-    .btn-config { background: none; border: none; font-size: 1.2em; cursor: pointer; padding: 0 2px; flex-shrink: 0; }
+#dataSeletor { 
+    width: 100%; 
+    padding: 8px 2px; 
+    border-radius: 8px; 
+    border: 1px solid #ddd; 
+    font-size: 0.65rem;
+    height: 38px;
+    box-sizing: border-box;
+}
+
+.btn-config { 
+    padding: 0 4px;
+    font-size: 1.2em;
+}
 
     /* Categorias com Scroll Lateral (Aqui a rolagem é boa!) */
     .category-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
