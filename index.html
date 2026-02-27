@@ -2,23 +2,65 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conexão Inteligente - Alarme</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minha Agenda Inteligente</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
+        /* Cabeçalho Alinhado */
+        .timeline-header { display: flex; gap: 5px; margin-bottom: 15px; align-items: stretch; height: 42px; }
+        #dataSeletor { flex: 2.5; padding: 0 8px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.85rem; height: 100%; box-sizing: border-box; }
+        .btn-date { flex: 1; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.65rem; font-weight: bold; }
+        
+        .header-secao { border-left: 5px solid #2196F3; padding-left: 10px; margin: 20px 0 10px; color: #2196F3; font-size: 1rem; font-weight: bold; text-transform: uppercase; }
+        .secao-card { background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
+        
+        /* Card de Tarefa */
+        .tarefa-item { background: #fff; margin-bottom: 12px; padding: 15px; border-radius: 12px; border-left: 6px solid #2196F3; box-shadow: 0 3px 6px rgba(0,0,0,0.08); position: relative; }
+        .tarefa-info-top { display: flex; justify-content: space-between; align-items: center; }
+        .tarefa-hora { font-size: 0.85rem; color: #2196F3; font-weight: bold; background: #e3f2fd; padding: 4px 10px; border-radius: 6px; }
+        .btn-excluir { background: #fff0f0; border: none; color: #ff4d4d; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; }
+
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .escondido { display: none !important; }
+    </style>
 </head>
 <body>
-    <div style="text-align: center; padding: 50px; font-family: sans-serif;">
-        <h1 id="status">Verificando Sistema...</h1>
-        <p id="msg">Aguarde a validação do Google...</p>
-        <button id="btnConectar" disabled style="padding: 20px; font-size: 1.2em; background: #ccc; cursor: not-allowed; border: none; border-radius: 10px;">
-            AGUARDANDO LOGIN...
-        </button>
+
+<div class="container">
+    <div class="timeline-header">
+        <button class="btn-date" onclick="setarData('hoje')">Hoje</button>
+        <input type="date" id="dataSeletor" onchange="carregarTarefas()">
+        <button style="background:none; border:none; font-size:1.5em; cursor:pointer;" onclick="abrirConfig()">⚙️</button>
     </div>
+
+    <div class="header-secao">📝 Nova Tarefa</div>
+    <div class="secao-card">
+        <input type="text" id="descTask" placeholder="O que vamos fazer?" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+        <input type="time" id="horaTask" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
+        <button id="btnSalvar" style="width:100%; padding:12px; background:#4CAF50; color:white; border:none; border-radius:8px; font-weight:bold;">Salvar Tudo</button>
+    </div>
+
+    <div class="header-secao">📅 Minhas Atividades</div>
+    <div id="listaTarefas">Carregando...</div>
+</div>
+
+<div id="modalConfig" class="modal escondido">
+    <div style="background:white; padding:20px; border-radius:15px; width:90%; max-width:400px; position:relative;">
+        <button onclick="fecharConfig()" style="position:absolute; right:15px; top:15px; border:none; background:none; font-size:1.2em;">✕</button>
+        <h4>Configurar Alarme</h4>
+        <button id="btnAtivarAlarme" style="width:100%; padding:12px; background:#2196F3; color:white; border:none; border-radius:8px;">CONECTAR NOTIFICAÇÕES</button>
+    </div>
+</div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
     import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+    import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+    // Suas credenciais oficiais
     const firebaseConfig = {
         apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
         authDomain: "agenda-4efa7.firebaseapp.com",
@@ -31,58 +73,58 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const messaging = getMessaging(app);
+    const db = getFirestore(app);
 
-    const btn = document.getElementById('btnConectar');
-    const statusTxt = document.getElementById('status');
-
-    // DESTRAVA IMEDIATA: O botão começa ativo para você poder clicar
-    statusTxt.innerText = "SISTEMA AGUARDANDO";
-    btn.disabled = false;
-    btn.innerText = "ATIVAR AGORA (FORÇAR)";
-    btn.style.background = "#2196F3";
-    btn.style.cursor = "pointer";
-
-    btn.onclick = async () => {
+    // Lógica do Alarme
+    document.getElementById('btnAtivarAlarme').onclick = async () => {
         try {
-            btn.innerText = "VALIDANDO GOOGLE...";
-            btn.disabled = true;
-
-            // 1. FORÇA O LOGIN NO MOMENTO DO CLIQUE
-            const userCredential = await signInAnonymously(auth);
-            console.log("Usuário autenticado:", userCredential.user.uid);
-
-            // 2. PEDE PERMISSÃO DE NOTIFICAÇÃO
             const permission = await Notification.requestPermission();
-            if (permission !== "granted") throw new Error("Permissão negada pelo navegador.");
+            if (permission !== "granted") return alert("Permita notificações.");
 
-            // 3. REGISTRA O SERVIÇO NA PASTA CORRETA
-            const reg = await navigator.serviceWorker.register('/ProjetosRev0/firebase-messaging-sw.js', {
-                scope: '/ProjetosRev0/'
-            });
+            // 1. Resolve o erro de credenciais fazendo o login antes
+            await signInAnonymously(auth);
 
-            // 4. GERA O TOKEN COM A CHAVE REAL DO SEU PRINT
+            // 2. Registro manual na pasta ProjetosRev0
+            const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+
+            // 3. Usa a chave VAPID exata da foto
             const token = await getToken(messaging, { 
                 vapidKey: 'BDyyehg3466Bi3B_awzlWOcaXxwhRu1kC8O8KStXQrP6BWuAl2h_iZ8zkvl89-nOO1NqriRqlxPKvevxktY5SI8',
                 serviceWorkerRegistration: reg
             });
 
-            if (token) {
-                statusTxt.innerText = "SISTEMA CONECTADO!";
-                btn.innerText = "ALARME ATIVADO COM SUCESSO";
-                btn.style.background = "#4CAF50";
-                alert("SUCESSO! A ponte com o Google foi estabelecida.");
-            }
-
-        } catch (err) {
-            console.error("FALHA:", err);
-            statusTxt.innerText = "ERRO DE SINCRONIA";
-            btn.disabled = false;
-            btn.innerText = "TENTAR NOVAMENTE";
-            btn.style.background = "#f44336";
-            alert("Erro: " + err.message);
-        }
+            if (token) alert("SISTEMA CONECTADO!");
+        } catch (err) { alert("Erro: " + err.message); }
     };
-</script>
 
+    // Funções da Agenda
+    window.abrirConfig = () => document.getElementById('modalConfig').classList.remove('escondido');
+    window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
+    window.setarData = (tipo) => {
+        if(tipo === 'hoje') document.getElementById('dataSeletor').value = new Date().toISOString().split('T')[0];
+        carregarTarefas();
+    };
+    window.carregarTarefas = async () => {
+        const lista = document.getElementById('listaTarefas'), data = document.getElementById('dataSeletor').value;
+        const q = query(collection(db, "tarefas"), orderBy("hora", "asc"));
+        const snap = await getDocs(q);
+        lista.innerHTML = "";
+        snap.forEach(d => {
+            const t = d.data();
+            if(t.dataString === data) {
+                lista.innerHTML += `
+                <div class="tarefa-item">
+                    <div class="tarefa-info-top">
+                        <span class="tarefa-hora">⏰ ${t.hora}</span>
+                        <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
+                    </div>
+                    <div style="margin-top:10px;">${t.descricao}</div>
+                </div>`;
+            }
+        });
+    };
+    window.excluirTask = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db,"tarefas",id)); carregarTarefas(); } };
+    window.setarData('hoje');
+</script>
 </body>
 </html>
