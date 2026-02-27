@@ -1,34 +1,27 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <link rel="manifest" href="manifest.json?v=2.3">
+    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Minha Agenda Inteligente</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 10px; margin: 0; }
         .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        
-        /* CABEÇALHO GRID */
         .timeline-header { display: grid; grid-template-columns: 0.8fr 0.8fr 0.8fr 2fr auto; gap: 5px; margin-bottom: 15px; align-items: center; }
-        .btn-date { width: 100%; padding: 10px 0; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
+        .btn-date { width: 100%; padding: 10px 0; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; font-size: 0.7rem; font-weight: bold; text-align: center; }
         .btn-date.ativo { background: #2196F3; color: white; border-color: #2196F3; }
         #dataSeletor { width: 100%; padding: 8px 5px; border-radius: 8px; border: 1px solid #ddd; font-size: 0.85rem; height: 40px; }
         .btn-config { background: none; border: none; font-size: 1.3em; cursor: pointer; padding: 0 5px; }
-
-        /* CATEGORIAS */
         .category-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; border-bottom: 1px solid #eee; }
         .btn-cat { white-space: nowrap; padding: 8px 15px; border-radius: 20px; border: 2px solid #ddd; background: #f9f9f9; cursor: pointer; font-size: 0.85em; }
         .btn-cat.ativo { background: #333; color: white; }
-
-        /* CARDS */
         .secao-card { background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
         input[type="text"], input[type="time"], input[type="number"] { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         #btnSalvar { background: #4CAF50; color: white; border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
         .tarefa-item { background: #fff; margin-bottom: 10px; padding: 12px; border-radius: 10px; border-left: 6px solid #2196F3; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; }
         .btn-excluir { position: absolute; right: 10px; top: 10px; background: none; border: none; color: #ff4d4d; cursor: pointer; }
-
-        /* MODAL COM ABAS (RESTAURADO) */
+        img { max-width: 100%; border-radius: 10px; margin-top: 10px; display: block; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; }
         .escondido { display: none !important; }
         .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; position: relative; }
@@ -51,6 +44,7 @@
 
     <div class="category-scroll" id="listaBotoesCat"></div>
     <input type="hidden" id="categoriaSelecionada" value="Geral">
+    <input type="hidden" id="corSelecionada" value="#4CAF50">
 
     <div class="secao-card">
         <input type="text" id="descTask" placeholder="O que vamos fazer?">
@@ -69,22 +63,18 @@
 <div id="modalConfig" class="modal escondido">
     <div class="modal-content">
         <button onclick="fecharConfig()" style="position: absolute; right: 15px; top: 15px; border:none; background:none; font-size:1.2em; cursor:pointer;">✕</button>
-        
         <div class="modal-tabs">
             <button class="tab-btn ativo" id="tabAlarme" onclick="mudarAba('alarme')">🔔</button>
             <button class="tab-btn" id="tabCat" onclick="mudarAba('categorias')">📂</button>
         </div>
-
         <div id="conteudoAlarme">
             <h4>Alerta Antecipado</h4>
-            <p style="font-size: 0.8em; color: #666;">Minutos antes da atividade:</p>
             <input type="number" id="minutosAlerta" value="15">
-            <button onclick="alert('Configuração salva!')" style="width:100%; padding:12px; background:#2196F3; color:white; border:none; border-radius:8px;">Salvar Alarme</button>
+            <button onclick="solicitarNotificacao()" style="width:100%; padding:12px; background:#2196F3; color:white; border:none; border-radius:8px;">Ativar Alarme</button>
         </div>
-
         <div id="conteudoCategorias" class="escondido">
             <h4>Excluir Categorias</h4>
-            <div id="listaExcluirCat" style="max-height: 200px; overflow-y: auto;"></div>
+            <div id="listaExcluirCat"></div>
         </div>
     </div>
 </div>
@@ -95,9 +85,8 @@
         if ('serviceWorker' in navigator) {
             const registrations = await navigator.serviceWorker.getRegistrations();
             for (let reg of registrations) {
-                await reg.update(); // Puxa do GitHub
+                await reg.update();
                 if (reg.waiting) {
-                    // Se houver nova versão esperando, mata a antiga e recarrega
                     reg.waiting.postMessage({ type: 'SKIP_WAITING' });
                     window.location.reload();
                 }
@@ -108,6 +97,7 @@
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, query, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDokOh2iwSG1L6NKna3DuM2jS6YiaphKKM",
@@ -120,25 +110,51 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const messaging = getMessaging(app);
+
     let filtroDataAtual = 'hoje';
 
-    // FUNÇÕES DO POP-UP
-    window.abrirConfig = () => {
-        document.getElementById('modalConfig').classList.remove('escondido');
-        listarCategoriasExclusao();
+    // COMPRESSÃO DE FOTO
+    const comprimirFoto = (file) => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const larguraMax = 600;
+                    const proporcao = larguraMax / img.width;
+                    canvas.width = larguraMax;
+                    canvas.height = img.height * proporcao;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.6));
+                };
+            };
+        });
     };
+
+    // ALARME COM SUA VAPID KEY
+    window.solicitarNotificacao = async () => {
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+            try {
+                const token = await getToken(messaging, { vapidKey: 'maD1HtPoKFN0DkDXzHEGffsJ6Xv_lRvagryZuhRJNu8' });
+                alert("Alarme ativado com sucesso!");
+                console.log("Token:", token);
+            } catch (err) { alert("Erro ao obter token."); }
+        } else { alert("Permita as notificações."); }
+    };
+
+    window.abrirConfig = () => { document.getElementById('modalConfig').classList.remove('escondido'); listarCategoriasExclusao(); };
     window.fecharConfig = () => document.getElementById('modalConfig').classList.add('escondido');
-    
     window.mudarAba = (aba) => {
-        const cAlarme = document.getElementById('conteudoAlarme'), cCat = document.getElementById('conteudoCategorias');
-        const tAlarme = document.getElementById('tabAlarme'), tCat = document.getElementById('tabCat');
-        if (aba === 'alarme') {
-            cAlarme.classList.remove('escondido'); cCat.classList.add('escondido');
-            tAlarme.classList.add('ativo'); tCat.classList.remove('ativo');
-        } else {
-            cCat.classList.remove('escondido'); cAlarme.classList.add('escondido');
-            tCat.classList.add('ativo'); tAlarme.classList.remove('ativo');
-        }
+        const cA = document.getElementById('conteudoAlarme'), cC = document.getElementById('conteudoCategorias');
+        const tA = document.getElementById('tabAlarme'), tC = document.getElementById('tabCat');
+        if(aba==='alarme'){cA.classList.remove('escondido');cC.classList.add('escondido');tA.classList.add('ativo');tC.classList.remove('ativo');}
+        else{cC.classList.remove('escondido');cA.classList.add('escondido');tC.classList.add('ativo');tA.classList.remove('ativo');}
     };
 
     async function listarCategoriasExclusao() {
@@ -152,14 +168,9 @@
     }
 
     window.removerCategoria = async (id) => {
-        if(confirm("Excluir categoria?")) {
-            await deleteDoc(doc(db, "categorias", id));
-            listarCategoriasExclusao();
-            carregarCategorias();
-        }
+        if(confirm("Excluir categoria?")) { await deleteDoc(doc(db, "categorias", id)); listarCategoriasExclusao(); carregarCategorias(); }
     };
 
-    // LOGICA DE DADOS
     async function carregarTarefas() {
         const lista = document.getElementById('listaTarefas'), dataFiltro = document.getElementById('dataSeletor').value, catFiltro = document.getElementById('categoriaSelecionada').value;
         try {
@@ -170,11 +181,13 @@
                 const t = d.data();
                 if (catFiltro !== "Geral" && t.categoria !== catFiltro) return;
                 if (filtroDataAtual !== 'semanal' && t.dataString !== dataFiltro) return;
-                lista.innerHTML += `<div class="tarefa-item" style="border-left-color:${t.corCategoria || '#2196F3'}">
+                const cor = t.corCategoria || '#2196F3';
+                lista.innerHTML += `<div class="tarefa-item" style="border-left-color:${cor}">
                     <button class="btn-excluir" onclick="excluirTask('${d.id}')">🗑️</button>
-                    <small>${t.categoria || 'Geral'}</small>
+                    <small style="color:${cor};font-weight:bold">${t.categoria || 'Geral'}</small>
                     <span style="float:right;">⏰ ${t.hora || '--:--'}</span>
-                    <p>${t.descricao}</p>
+                    <p style="margin:8px 0;">${t.descricao}</p>
+                    ${t.fotoUrl ? `<img src="${t.fotoUrl}">` : ""}
                 </div>`;
             });
         } catch(e) {}
@@ -213,18 +226,28 @@
         document.querySelectorAll('.btn-cat').forEach(b => b.classList.remove('ativo'));
         el.classList.add('ativo');
         document.getElementById('categoriaSelecionada').value = n;
+        document.getElementById('corSelecionada').value = c;
         carregarTarefas();
     };
 
     document.getElementById('btnSalvar').onclick = async () => {
-        const desc = document.getElementById('descTask').value, hora = document.getElementById('horaTask').value, data = document.getElementById('dataSeletor').value;
+        const desc = document.getElementById('descTask').value, hora = document.getElementById('horaTask').value, data = document.getElementById('dataSeletor').value, fileInput = document.getElementById('fotoTask');
         if(!desc || !data) return alert("Preencha tudo!");
-        await addDoc(collection(db, "tarefas"), {
-            descricao: desc, hora: hora, dataString: data,
-            categoria: document.getElementById('categoriaSelecionada').value,
-            dataCriacao: new Date()
-        });
-        document.getElementById('descTask').value = ""; carregarTarefas();
+        
+        let btn = document.getElementById('btnSalvar');
+        btn.innerText = "Enviando..."; btn.disabled = true;
+
+        try {
+            let base64 = fileInput.files[0] ? await comprimirFoto(fileInput.files[0]) : "";
+            await addDoc(collection(db, "tarefas"), {
+                descricao: desc, hora: hora, dataString: data,
+                categoria: document.getElementById('categoriaSelecionada').value,
+                corCategoria: document.getElementById('corSelecionada').value,
+                fotoUrl: base64, dataCriacao: new Date()
+            });
+            document.getElementById('descTask').value = ""; fileInput.value = ""; carregarTarefas();
+        } catch(e) { alert("Erro ao salvar!"); }
+        btn.innerText = "Salvar Tudo"; btn.disabled = false;
     };
 
     window.excluirTask = async (id) => { if(confirm("Excluir?")) { await deleteDoc(doc(db, "tarefas", id)); carregarTarefas(); } };
