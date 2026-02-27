@@ -26,13 +26,11 @@
   <pre id="log" style="text-align:left; max-width:900px; margin:30px auto; background:#f5f5f5; padding:12px; border-radius:10px; overflow:auto;"></pre>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getMessaging, getToken, isSupported } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getMessaging, getToken, isSupported, deleteToken } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-messaging.js";
+    import { getInstallations, getId, getToken as getInstallationsToken } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-installations.js";
 
-    // Roda só depois do HTML carregar (resolve btn=null)
     window.addEventListener("DOMContentLoaded", () => {
-
-      // Firebase config (API KEY NOVA)
       const firebaseConfig = {
         apiKey: "AIzaSyAEQeIKc1MCrV8BJr0CH_mfjwCp1YiRC8s",
         authDomain: "agenda-4efa7.firebaseapp.com",
@@ -51,37 +49,28 @@
       const statusTxt = document.getElementById("status");
       const logEl = document.getElementById("log");
 
-      // Se algum ID estiver errado, avisa
       if (!btn || !btnReset || !statusTxt || !logEl) {
-        console.error("Elementos não encontrados:", { btn, btnReset, statusTxt, logEl });
-        alert("Erro: não encontrei btnConectar/btnReset/status/log. Confira os IDs no HTML.");
+        alert("Erro: IDs do HTML não encontrados (btnConectar/btnReset/status/log).");
         return;
       }
 
       function log(...args) {
-        const msg = args
-          .map(a => (typeof a === "string" ? a : JSON.stringify(a, null, 2)))
-          .join(" ");
+        const msg = args.map(a => (typeof a === "string" ? a : JSON.stringify(a, null, 2))).join(" ");
         logEl.textContent += msg + "\n";
         console.log(...args);
       }
 
-      // Inicializa Firebase
       const app = initializeApp(firebaseConfig);
 
-      // Botão reset SW/cache
       btnReset.onclick = async () => {
         try {
           log("=== RESET INICIADO ===");
-
           const regs = await navigator.serviceWorker.getRegistrations();
           log("ServiceWorkers encontrados:", regs.length);
-
           for (const r of regs) {
             log("Unregister SW:", r.scope);
             await r.unregister();
           }
-
           if ("caches" in window) {
             const keys = await caches.keys();
             log("Caches encontrados:", keys.length);
@@ -90,10 +79,8 @@
               await caches.delete(k);
             }
           }
-
           try { localStorage.clear(); } catch {}
           try { sessionStorage.clear(); } catch {}
-
           log("RESET finalizado. Recarregando em 1s...");
           setTimeout(() => location.reload(), 1000);
         } catch (e) {
@@ -102,7 +89,6 @@
         }
       };
 
-      // Botão principal
       btn.onclick = async () => {
         btn.disabled = true;
         btn.innerText = "SINCRONIZANDO...";
@@ -112,26 +98,38 @@
           log("=== DIAGNÓSTICO ===");
           log("URL:", location.href);
           log("API KEY EM USO:", firebaseConfig.apiKey);
-          log("PROJECT ID:", firebaseConfig.projectId);
-          log("SENDER ID:", firebaseConfig.messagingSenderId);
-          log("VAPID (prefixo):", VAPID_KEY.slice(0, 18) + "...");
 
           const supported = await isSupported();
-          log("FCM isSupported():", supported);
-          if (!supported) throw new Error("Este navegador/ambiente não suporta Firebase Messaging (FCM).");
+          log("FCM supported:", supported);
+          if (!supported) throw new Error("FCM não suportado neste navegador/ambiente.");
 
           const permission = await Notification.requestPermission();
           log("Notification permission:", permission);
-          if (permission !== "granted") throw new Error("Permissão de notificação negada.");
+          if (permission !== "granted") throw new Error("Permissão negada.");
 
-          log("Registrando Service Worker:", SW_PATH, "Scope:", SW_SCOPE);
+          log("Registrando SW:", SW_PATH, "Scope:", SW_SCOPE);
           const reg = await navigator.serviceWorker.register(SW_PATH, { scope: SW_SCOPE });
           await navigator.serviceWorker.ready;
 
-          log("SW registrado. Scope:", reg.scope);
-          log("SW active scriptURL:", reg.active?.scriptURL || "(sem active ainda)");
+          // 1) Força Installations (gera credencial necessária)
+          log("Inicializando Firebase Installations...");
+          const installations = getInstallations(app);
 
+          const installationId = await getId(installations);
+          log("Installation ID:", installationId);
+
+          await getInstallationsToken(installations, true);
+          log("Installation Auth Token gerado");
+
+          // 2) Messaging token (limpa antes, para evitar lixo antigo)
           const messaging = getMessaging(app);
+
+          try {
+            await deleteToken(messaging);
+            log("Token antigo removido (ou não existia)");
+          } catch (e) {
+            log("deleteToken falhou (ok):", e?.message || e);
+          }
 
           log("Gerando token FCM...");
           const token = await getToken(messaging, {
@@ -139,7 +137,7 @@
             serviceWorkerRegistration: reg
           });
 
-          if (!token) throw new Error("Token não retornou (null/empty).");
+          if (!token) throw new Error("Token FCM vazio.");
 
           statusTxt.innerText = "CONECTADO COM SUCESSO!";
           btn.style.background = "#4CAF50";
